@@ -1,0 +1,86 @@
+"""JobAgent: orchestrates the full research job application pipeline."""
+
+from __future__ import annotations
+
+from typing import Any
+
+from agent.llm_client import LLMClient
+from agent.cv_parser import CVParser, CVProfile
+from agent.job_searcher import JobSearcher
+from agent.job_matcher import JobMatcher
+from agent.cv_tailor import CVTailor, TailoringHints
+from agent.cover_letter import CoverLetterWriter
+
+
+class JobAgent:
+    """Orchestrates CV parsing, job search, scoring, and application generation.
+
+    Each instance holds its own LLM client configured with the given token and
+    model — safe to instantiate per-request (no shared mutable state).
+
+    Args:
+        token:   HuggingFace API token.
+        model:   HuggingFace model ID (e.g. "mistralai/Mistral-7B-Instruct-v0.3").
+    """
+
+    def __init__(self, token: str, model: str) -> None:
+        self.llm = LLMClient(model=model, backend="huggingface", token=token)
+        self.parser = CVParser(self.llm)
+        self.searcher = JobSearcher()
+        self.matcher = JobMatcher(self.llm)
+        self.tailor = CVTailor(self.llm)
+        self.writer = CoverLetterWriter(self.llm)
+
+    # ------------------------------------------------------------------
+    # Pipeline steps
+    # ------------------------------------------------------------------
+
+    def parse_cv(self, cv_path: str) -> tuple[CVProfile, str]:
+        """Parse a CV file.
+
+        Returns:
+            (profile dict, compact text summary for use in prompts)
+        """
+        profile = self.parser.parse(cv_path)
+        text = self.parser.summarize(profile)
+        return profile, text
+
+    def search_jobs(
+        self,
+        field: str,
+        location: str = "Europe",
+        position_type: str = "any",
+    ) -> list[dict[str, Any]]:
+        """Search all free job boards and return deduplicated listings."""
+        return self.searcher.search(field, location, position_type)
+
+    def score_jobs(
+        self,
+        jobs: list[dict[str, Any]],
+        profile_text: str,
+        min_score: int = 60,
+    ) -> list[dict[str, Any]]:
+        """Score all jobs and return those meeting min_score, highest first."""
+        return self.matcher.score_all(jobs, profile_text, min_score)
+
+    def prepare_application(
+        self,
+        job: dict[str, Any],
+        profile_text: str,
+    ) -> tuple[TailoringHints, str]:
+        """Generate CV tailoring hints and a cover letter draft for one position.
+
+        Returns:
+            (tailoring_hints dict, cover_letter string)
+        """
+        hints = self.tailor.generate(job, profile_text)
+        letter = self.writer.generate(job, profile_text)
+        return hints, letter
+
+    def regenerate_letter(
+        self,
+        job: dict[str, Any],
+        profile_text: str,
+    ) -> str:
+        """Generate an alternative version of the cover letter."""
+        return self.writer.generate(job, profile_text, regenerate=True)

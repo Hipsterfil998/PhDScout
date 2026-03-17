@@ -212,7 +212,7 @@ def _save_application(
 
     Returns the path to the created directory.
     """
-    from agent.cv_tailor import format_hints_text
+    from agent.cv_tailor import format_hints_text  # noqa: PLC0415
 
     institution = _safe_dirname(job.get("institution", job.get("company", "Unknown")))
     title = _safe_dirname(job.get("title", "Position"))
@@ -350,6 +350,16 @@ def main(
     # -------------------------------------------------------------------------
     console.rule("[bold cyan]Step 2: Parsing CV[/bold cyan]")
 
+    from agent.llm_client import LLMClient
+    from agent.cv_parser import CVParser
+    from agent.job_searcher import JobSearcher
+    from agent.job_matcher import JobMatcher
+
+    llm = LLMClient(model=model)
+    parser = CVParser(llm)
+    searcher = JobSearcher()
+    matcher = JobMatcher(llm)
+
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -357,11 +367,10 @@ def main(
         console=console,
     ) as progress:
         progress.add_task("Parsing CV with LLM...", total=None)
-        from agent.cv_parser import extract_profile, profile_summary
-        profile = extract_profile(cv_path, model=model)
+        profile = parser.parse(cv_path)
 
     _print_cv_profile(profile)
-    profile_text = profile_summary(profile)
+    profile_text = parser.summarize(profile)
 
     # -------------------------------------------------------------------------
     # Step 3: Search for research positions
@@ -373,13 +382,7 @@ def main(
         f"Type filter: [bold]{position_type}[/bold]"
     )
 
-    from agent.job_searcher import search_jobs
-    jobs = search_jobs(
-        field=field,
-        location=location,
-        position_type=position_type,
-        console=console,
-    )
+    jobs = searcher.search(field=field, location=location, position_type=position_type)
 
     if not jobs:
         console.print(
@@ -400,7 +403,6 @@ def main(
         f"(min score: {min_score})..."
     )
 
-    from agent.job_matcher import score_job
     scored: list[dict[str, Any]] = []
 
     with Progress(
@@ -412,7 +414,7 @@ def main(
     ) as progress:
         task = progress.add_task("Scoring...", total=len(to_score))
         for job in to_score:
-            match = score_job(job, profile, profile_text, model=model)
+            match = matcher.score(job, profile_text)
             scored.append({**job, "match": match})
             progress.advance(task)
 
@@ -436,9 +438,12 @@ def main(
     # -------------------------------------------------------------------------
     console.rule("[bold cyan]Step 5: Review & Save Applications[/bold cyan]")
 
-    from agent.cover_letter import generate_cover_letter
-    from agent.cv_tailor import generate_tailoring_hints
+    from agent.cover_letter import CoverLetterWriter
+    from agent.cv_tailor import CVTailor
     from agent.interactive_review import ReviewSession
+
+    tailor = CVTailor(llm)
+    writer = CoverLetterWriter(llm)
 
     review_session = ReviewSession(llm_model=model)
     review_session.set_profile(profile, profile_text)
@@ -467,12 +472,7 @@ def main(
             console=console,
         ) as p:
             p.add_task("Generating CV tailoring hints...", total=None)
-            tailoring_hints = generate_tailoring_hints(
-                job=job,
-                profile=profile,
-                profile_text=profile_text,
-                model=model,
-            )
+            tailoring_hints = tailor.generate(job, profile_text)
 
         # Generate cover letter
         with Progress(
@@ -482,12 +482,7 @@ def main(
             console=console,
         ) as p:
             p.add_task("Generating cover letter draft...", total=None)
-            cover_letter = generate_cover_letter(
-                job=job,
-                profile=profile,
-                profile_text=profile_text,
-                model=model,
-            )
+            cover_letter = writer.generate(job, profile_text)
 
         if no_interactive:
             # Batch mode: save without prompting

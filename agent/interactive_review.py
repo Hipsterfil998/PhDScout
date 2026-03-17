@@ -321,25 +321,13 @@ class ReviewSession:
         original_letter: str,
         console: Console,
     ) -> str:
-        """Re-generate the cover letter with a 'regenerate' hint.
-
-        Imports lazily to avoid circular imports at module level.
-        """
         try:
-            from agent.cover_letter import generate_cover_letter
+            from agent.llm_client import LLMClient
+            from agent.cover_letter import CoverLetterWriter
 
-            # We need the profile — store it if available, else use placeholder
-            profile = getattr(self, "_profile", {})
             profile_text = getattr(self, "_profile_text", "")
-
-            new_letter = generate_cover_letter(
-                job=job,
-                profile=profile,
-                profile_text=profile_text,
-                regenerate=True,
-                model=self._model,
-                console=console,
-            )
+            llm = LLMClient(model=self._model)
+            new_letter = CoverLetterWriter(llm).generate(job, profile_text, regenerate=True)
             return new_letter
         except Exception as exc:
             console.print(f"[red]Regeneration failed: {exc}[/red]")
