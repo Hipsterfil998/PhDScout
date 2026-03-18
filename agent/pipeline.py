@@ -58,10 +58,9 @@ class JobAgent:
         self,
         jobs: list[dict[str, Any]],
         profile_text: str,
-        min_score: int = 60,
     ) -> list[dict[str, Any]]:
-        """Score all jobs and return those meeting min_score, highest first."""
-        return self.matcher.score_all(jobs, profile_text, min_score)
+        """Score all jobs and return them sorted by score (highest first)."""
+        return self.matcher.score_all(jobs, profile_text)
 
     def prepare_application(
         self,

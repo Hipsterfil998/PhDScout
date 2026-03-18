@@ -200,17 +200,19 @@ def run_search(
             )
 
         progress(0.6, desc="Scoring positions...")
-        scored = agent.score_jobs(jobs, profile_text, min_score)
+        scored = agent.score_jobs(jobs, profile_text)
+        recommended = [j for j in scored if j["match"].get("match_score", 0) >= min_score]
 
         progress(1.0, desc="Done!")
         status = (
-            f"✅ Found **{len(jobs)}** positions, "
-            f"**{len(scored)}** meet your minimum score of {min_score}."
+            f"✅ Found **{len(jobs)}** positions scored — "
+            f"**{len(recommended)}** above {min_score}. "
+            f"All {len(scored)} are available to review."
         )
         return (
             _fmt_profile(profile),
             _fmt_jobs_table(jobs),
-            _fmt_scored_table(scored),
+            _fmt_scored_table(recommended),
             status,
             profile,
             profile_text,
@@ -479,7 +481,7 @@ with gr.Blocks(
                         headers=["#", "Title", "Institution", "Location", "Type", "Source", "Deadline"],
                         interactive=False, wrap=True,
                     )
-            gr.Markdown("### Qualifying Positions (above minimum score)")
+            gr.Markdown("### Recommended Positions (above minimum score) — all positions are reviewable in the next tab")
             scored_df = gr.Dataframe(
                 headers=["#", "Score", "Title", "Institution", "Type", "Rec.", "Why good fit"],
                 interactive=False, wrap=True,

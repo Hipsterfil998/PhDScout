@@ -112,13 +112,12 @@ class JobMatcher:
         self,
         jobs: list[dict[str, Any]],
         profile_text: str,
-        min_score: int = 60,
     ) -> list[dict[str, Any]]:
-        """Score all jobs and return those meeting min_score, sorted highest first."""
+        """Score all jobs and return them sorted by score (highest first)."""
         scored = []
         for job in jobs:
             match = self.score(job, profile_text)
             scored.append({**job, "match": match})
 
         scored.sort(key=lambda j: j["match"].get("match_score", 0), reverse=True)
-        return [j for j in scored if j["match"].get("match_score", 0) >= min_score]
+        return scored
