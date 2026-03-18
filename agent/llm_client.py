@@ -218,16 +218,16 @@ class LLMClient:
 
     def _generate_hf(self, system: str, user: str) -> str:
         client = self._get_hf_client()
-        prompt = self._format_hf_prompt(system, user, self.model)
         try:
-            result = client.text_generation(
-                prompt,
-                max_new_tokens=config.max_tokens,
-                do_sample=True,
+            result = client.chat_completion(
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                max_tokens=config.max_tokens,
                 temperature=0.7,
             )
-            # InferenceClient returns the generated text as a string
-            return result if isinstance(result, str) else str(result)
+            return result.choices[0].message.content or ""
         except Exception as exc:
             raise RuntimeError(
                 f"HuggingFace inference failed: {exc}\n"
@@ -236,20 +236,20 @@ class LLMClient:
 
     def _stream_hf(self, system: str, user: str) -> Iterator[str]:
         client = self._get_hf_client()
-        prompt = self._format_hf_prompt(system, user, self.model)
         try:
-            for token in client.text_generation(
-                prompt,
-                max_new_tokens=config.max_tokens,
-                stream=True,
-                do_sample=True,
+            stream = client.chat_completion(
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                max_tokens=config.max_tokens,
                 temperature=0.7,
-            ):
-                # Each yielded item is a TextGenerationStreamOutput or plain str
-                if hasattr(token, "token"):
-                    yield token.token.text
-                else:
-                    yield str(token)
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta.content
+                if delta:
+                    yield delta
         except Exception as exc:
             raise RuntimeError(
                 f"HuggingFace streaming failed: {exc}"
