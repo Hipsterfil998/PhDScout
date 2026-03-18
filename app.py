@@ -152,7 +152,6 @@ def run_search(
     location: str,
     pos_type: str,
     min_score: int,
-    hf_token: str,
     model_name: str,
     progress=gr.Progress(track_tqdm=True),
 ) -> tuple:
@@ -168,13 +167,13 @@ def run_search(
         return _err("Please upload a CV file first.")
     if not field or not field.strip():
         return _err("Please enter a research field.")
-    if not hf_token or not hf_token.strip():
-        return _err("Please provide a HuggingFace API token.")
+    if not _SHARED_TOKEN:
+        return _err("No HF_TOKEN configured. Set it as a Space secret.")
 
     try:
         from agent.pipeline import JobAgent
 
-        agent = JobAgent(token=hf_token.strip(), model=model_name)
+        agent = JobAgent(token=_SHARED_TOKEN, model=model_name)
         cv_path = cv_file if isinstance(cv_file, str) else cv_file.name
 
         progress(0, desc="Parsing CV...")
@@ -222,7 +221,6 @@ def load_position(
     choice: str,
     scored_jobs: list,
     profile_text: str,
-    hf_token: str,
     model_name: str,
     progress=gr.Progress(),
 ) -> tuple:
@@ -239,7 +237,7 @@ def load_position(
         match: dict = job.get("match") or {}
 
         from agent.pipeline import JobAgent
-        agent = JobAgent(token=hf_token.strip(), model=model_name)
+        agent = JobAgent(token=_SHARED_TOKEN, model=model_name)
 
         progress(0.3, desc="Generating tailoring hints...")
         hints, cover_letter = agent.prepare_application(job, profile_text)
@@ -256,7 +254,6 @@ def regenerate_letter(
     current_idx: int,
     scored_jobs: list,
     profile_text: str,
-    hf_token: str,
     model_name: str,
     progress=gr.Progress(),
 ) -> str:
@@ -264,7 +261,7 @@ def regenerate_letter(
         return "*No position loaded.*"
     try:
         from agent.pipeline import JobAgent
-        agent = JobAgent(token=hf_token.strip(), model=model_name)
+        agent = JobAgent(token=_SHARED_TOKEN, model=model_name)
         progress(0.3, desc="Regenerating cover letter...")
         result = agent.regenerate_letter(scored_jobs[current_idx], profile_text)
         progress(1.0)
@@ -373,6 +370,9 @@ MODELS = [
     "microsoft/Phi-3-mini-4k-instruct",
 ]
 
+# If a shared token is configured via Space Secrets, users don't need to provide one.
+_SHARED_TOKEN = os.environ.get("HF_TOKEN", "")
+
 with gr.Blocks(
     theme=gr.themes.Soft(primary_hue="blue", secondary_hue="purple"),
     title="Research Job Agent",
@@ -426,23 +426,12 @@ with gr.Blocks(
                         )
                 with gr.Column(scale=1):
                     gr.Markdown("### LLM Settings")
-                    hf_token = gr.Textbox(
-                        label="HuggingFace API Token",
-                        placeholder="hf_...",
-                        type="password",
-                        info="Free token from huggingface.co/settings/tokens",
-                    )
                     model_dropdown = gr.Dropdown(
                         label="Model",
                         choices=MODELS,
                         value=MODELS[0],
                         info="All are free via HF Inference API",
                     )
-                    gr.Markdown("""
-                    **Get a free HF token:**
-                    1. Sign up at [huggingface.co](https://huggingface.co)
-                    2. Settings → Access Tokens → New token (read)
-                    """)
             search_btn = gr.Button("Parse CV & Search Positions", variant="primary", size="lg")
             search_status = gr.Markdown("*Ready. Fill in the form and click Search.*")
 
@@ -514,7 +503,7 @@ with gr.Blocks(
 
     search_btn.click(
         fn=run_search,
-        inputs=[cv_file, field_input, location_input, pos_type, min_score, hf_token, model_dropdown],
+        inputs=[cv_file, field_input, location_input, pos_type, min_score, model_dropdown],
         outputs=[profile_display, jobs_df, scored_df, search_status,
                  profile_state, profile_text_state, jobs_state, scored_state, position_selector],
     )
@@ -523,14 +512,14 @@ with gr.Blocks(
 
     load_btn.click(
         fn=load_position,
-        inputs=[position_selector, scored_state, profile_text_state, hf_token, model_dropdown],
+        inputs=[position_selector, scored_state, profile_text_state, model_dropdown],
         outputs=[position_details_display, hints_display, cover_letter_box,
                  review_status, current_idx_state],
     )
 
     regen_btn.click(
         fn=regenerate_letter,
-        inputs=[current_idx_state, scored_state, profile_text_state, hf_token, model_dropdown],
+        inputs=[current_idx_state, scored_state, profile_text_state, model_dropdown],
         outputs=[cover_letter_box],
     )
 
