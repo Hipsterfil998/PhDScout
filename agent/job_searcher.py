@@ -314,6 +314,9 @@ class JobSearcher:
             Deduplicated list of JobListing dicts, sorted with richer entries first.
         """
         pt = position_type.lower() if position_type else "any"
+        # Normalize UI display labels to query-friendly strings
+        _normalize = {"Europe (all)": "Europe", "Worldwide": ""}
+        location = _normalize.get(location, location)
         all_listings: list[dict] = []
 
         # jobs.ac.uk is UK-only: only query it when location is UK or worldwide
