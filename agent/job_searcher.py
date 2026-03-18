@@ -102,6 +102,34 @@ def _deduplicate(listings: list[dict]) -> list[dict]:
 _UK_LOCATIONS = {"uk", "united kingdom", "great britain", "england", "scotland", "wales"}
 _WORLDWIDE_LOCATIONS = {"worldwide", "anywhere", "any", "global", ""}
 
+# mlscientist.com WordPress category slugs
+_MLSCI_TYPE_SLUG: dict[str, str] = {
+    "phd":            "phd-positions",
+    "postdoc":        "postdoc-positions",
+    "fellowship":     "jobs",
+    "research_staff": "jobs",
+    "any":            "jobs",
+}
+
+# mlscientist.com country slug mapping (lowercase location → slug)
+_MLSCI_COUNTRY_SLUG: dict[str, str] = {
+    "uk": "united-kingdom",
+    "united kingdom": "united-kingdom",
+    "great britain": "united-kingdom",
+    "england": "united-kingdom",
+    "scotland": "united-kingdom",
+    "wales": "united-kingdom",
+    "germany": "germany",
+    "netherlands": "netherlands",
+    "denmark": "denmark",
+    "france": "france",
+    "norway": "norway",
+    "canada": "canada",
+    "united states": "united-states",
+    "usa": "united-states",
+    "spain": "spain",
+}
+
 
 def _is_uk_location(location: str) -> bool:
     return location.lower() in _UK_LOCATIONS
@@ -109,6 +137,74 @@ def _is_uk_location(location: str) -> bool:
 
 def _is_worldwide(location: str) -> bool:
     return location.lower() in _WORLDWIDE_LOCATIONS
+
+
+def _search_mlscientist(field: str, location: str, position_type: str) -> list[dict]:
+    """mlscientist.com — ML/AI academic job board, WordPress with category + search."""
+    type_slug = _MLSCI_TYPE_SLUG.get(position_type, "jobs")
+    country_slug = _MLSCI_COUNTRY_SLUG.get(location.lower(), "")
+
+    # Build URLs to query: prefer intersection of type+country when available,
+    # always include the type-category search as fallback.
+    urls_to_try: list[str] = []
+    if country_slug:
+        urls_to_try.append(
+            f"https://mlscientist.com/category/{country_slug}/?s={quote_plus(field)}"
+        )
+    urls_to_try.append(
+        f"https://mlscientist.com/category/{type_slug}/?s={quote_plus(field)}"
+    )
+
+    listings: list[dict] = []
+    seen_urls: set[str] = set()
+
+    for url in urls_to_try:
+        try:
+            resp = requests.get(url, headers=_HEADERS, timeout=15)
+            if resp.status_code != 200:
+                continue
+            soup = BeautifulSoup(resp.text, "lxml")
+            for card in soup.select("article.cm-entry-summary")[:15]:
+                title_el = card.select_one("h3.cm-entry-title a, h2.cm-entry-title a")
+                if not title_el:
+                    continue
+                href = title_el.get("href", "")
+                if not href or href in seen_urls:
+                    continue
+                seen_urls.add(href)
+
+                excerpt_el = card.select_one(".cm-entry-summary-text, .entry-summary, p")
+                excerpt = excerpt_el.get_text(strip=True) if excerpt_el else ""
+
+                # Extract location from "Location: X" pattern in excerpt
+                loc_match = re.search(r"location[:\s]+([^\n|]+)", excerpt, re.IGNORECASE)
+                loc_text = loc_match.group(1).strip() if loc_match else location
+
+                # Extract deadline from "Deadline: X" pattern
+                deadline_match = re.search(r"deadline[:\s]+([^\n|]+)", excerpt, re.IGNORECASE)
+                deadline = deadline_match.group(1).strip() if deadline_match else None
+
+                date_el = card.select_one(".cm-entry-date, time")
+                if not deadline and date_el:
+                    deadline = date_el.get_text(strip=True)
+
+                title_text = title_el.get_text(strip=True)
+                listings.append({
+                    "title": title_text,
+                    "institution": "",
+                    "location": loc_text,
+                    "url": href,
+                    "description": excerpt,
+                    "deadline": deadline,
+                    "email": _extract_email(excerpt),
+                    "source": "mlscientist",
+                    "type": _detect_type(title_text, excerpt),
+                })
+            time.sleep(_DELAY)
+        except Exception:
+            continue
+
+    return listings
 
 
 def _search_jobs_ac_uk(field: str, location: str, position_type: str) -> list[dict]:
@@ -322,7 +418,7 @@ def _search_web(field: str, location: str, position_type: str) -> list[dict]:
 class JobSearcher:
     """Searches for research/PhD positions across academic sources and web.
 
-    Sources: jobs.ac.uk (UK only), FindAPhD (worldwide), DuckDuckGo (targeted web search).
+    Sources: jobs.ac.uk (UK only), FindAPhD (worldwide), mlscientist.com (ML/AI), DuckDuckGo (targeted web search).
     """
 
     def search(
@@ -349,6 +445,7 @@ class JobSearcher:
 
         # jobs.ac.uk is UK-only: only query it when location is UK or worldwide
         scrapers = [
+            lambda f, l: _search_mlscientist(f, l, pt),
             lambda f, l: _search_findaphd(f, l, pt),
             lambda f, l: _search_web(f, l, pt),
         ]

@@ -392,59 +392,6 @@ LOCATIONS = [
     "South Africa", "Israel",
 ]
 
-_MAP_HTML = """
-<div style="margin-top:6px;">
-  <p style="font-size:0.8em;color:#666;margin-bottom:4px;">
-    🗺 Click on the map to select a country, or use the dropdown above.
-  </p>
-  <div id="job-map" style="height:280px;border-radius:8px;border:1px solid #ddd;"></div>
-</div>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-(function initMap() {
-  if (window._jobMap) return;
-  const el = document.getElementById('job-map');
-  if (!el) { setTimeout(initMap, 300); return; }
-
-  var map = L.map('job-map', {zoomControl:true}).setView([30, 10], 2);
-  window._jobMap = map;
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://openstreetmap.org">OpenStreetMap</a>',
-    maxZoom: 18
-  }).addTo(map);
-
-  var marker = null;
-
-  map.on('click', function(e) {
-    var lat = e.latlng.lat, lon = e.latlng.lng;
-    if (marker) map.removeLayer(marker);
-    marker = L.marker([lat, lon]).addTo(map).bindPopup('Loading…').openPopup();
-
-    fetch('https://nominatim.openstreetmap.org/reverse?lat=' + lat + '&lon=' + lon + '&format=json')
-      .then(function(r){ return r.json(); })
-      .then(function(data) {
-        var country = (data.address && data.address.country) || '';
-        if (!country) return;
-        marker.setPopupContent(country);
-
-        // Update Gradio dropdown (elem_id="location-dd")
-        var container = document.getElementById('location-dd');
-        if (!container) return;
-        var input = container.querySelector('input');
-        if (!input) return;
-        var setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set;
-        setter.call(input, country);
-        input.dispatchEvent(new Event('input',  {bubbles:true}));
-        input.dispatchEvent(new Event('change', {bubbles:true}));
-        input.dispatchEvent(new Event('blur',   {bubbles:true}));
-      })
-      .catch(function(){});
-  });
-})();
-</script>
-"""
-
 # If a shared token is configured via Space Secrets, users don't need to provide one.
 _SHARED_TOKEN = os.environ.get("HF_TOKEN", "")
 
@@ -489,10 +436,8 @@ with gr.Blocks(
                         choices=LOCATIONS,
                         value="Europe (all)",
                         allow_custom_value=True,
-                        elem_id="location-dd",
-                        info="Select from the list, type a custom location, or click the map below",
+                        info="Select from the list or type a custom location",
                     )
-                    gr.HTML(_MAP_HTML)
                     with gr.Row():
                         pos_type = gr.Dropdown(
                             label="Position type",
