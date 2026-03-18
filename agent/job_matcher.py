@@ -47,14 +47,24 @@ Return a JSON object with exactly these keys:
 }}
 
 Scoring guide:
-  85-100: Excellent match — research interests closely aligned
+  85-100: Excellent match — research interests closely aligned, strong publication record in the area
   70-84:  Good match — clear research overlap, most skills present
-  55-69:  Partial match — some overlap but gaps in methodology
+  55-69:  Partial match — meaningful overlap even if not all keywords match exactly
   35-54:  Weak match — limited overlap, significant gaps
   0-34:   Poor match — very different research areas
 
-Consider: research interest alignment, thesis relevance, methodological overlap,
-publication track record, technical skills, career stage fit. Be realistic."""
+Important instructions:
+- The job description may be a short excerpt. When it is vague or brief, rely primarily
+  on the TITLE and INSTITUTION to infer the research area — do NOT penalise short descriptions.
+- Reason SEMANTICALLY, not by keyword matching. "Deep learning" and "neural networks",
+  "NLP" and "natural language processing", "ML" and "machine learning" are equivalent.
+- Adjacent and complementary fields count as partial overlap (score ≥ 55).
+- Highlight ALL matching areas found in the candidate profile, including transferable
+  methodological skills, domain knowledge, tools, and publications.
+- Be generous when evidence is ambiguous — a candidate who publishes in area X is
+  likely qualified for positions requiring closely related area Y.
+- Consider: research interest alignment, thesis relevance, methodological overlap,
+  publication track record, technical skills, career stage fit."""
 
 
 def _fallback(raw: str) -> MatchResult:
