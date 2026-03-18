@@ -30,3 +30,13 @@ def parse_json(raw: str) -> dict[str, Any] | None:
             except json.JSONDecodeError:
                 pass
     return None
+
+
+def job_institution(job: dict) -> str:
+    """Return the job's institution name, empty string if absent."""
+    return job.get("institution") or ""
+
+
+def job_description(job: dict, max_chars: int = 3000) -> str:
+    """Return the job description truncated to max_chars."""
+    return (job.get("description") or "No description provided.")[:max_chars]

@@ -22,6 +22,8 @@ from typing import Any
 
 import gradio as gr
 
+from agent.utils import job_institution
+
 
 # ---------------------------------------------------------------------------
 # Formatting helpers  (pure functions — no LLM dependency)
@@ -59,7 +61,7 @@ def _fmt_profile(profile: dict) -> str:
 
 def _fmt_jobs_table(jobs: list) -> list[list]:
     return [
-        [i, j.get("title", ""), j.get("institution", j.get("company", "")),
+        [i, j.get("title", ""), job_institution(j),
          j.get("location", ""), j.get("type", ""), j.get("source", ""),
          j.get("deadline") or "—"]
         for i, j in enumerate(jobs, 1)
@@ -74,7 +76,7 @@ def _fmt_scored_table(jobs: list) -> list[list]:
         why = m.get("why_good_fit") or ""
         rows.append([
             i, m.get("match_score", 0), job.get("title", ""),
-            job.get("institution", job.get("company", "")), job.get("type", ""),
+            job_institution(job), job.get("type", ""),
             icons.get(m.get("recommendation", ""), ""),
             why[:60] + "..." if len(why) > 60 else why,
         ])
@@ -89,7 +91,7 @@ def _fmt_job_details(job: dict, match: dict) -> str:
     url = job.get("url", "")
     lines = [
         f"## {job.get('title', 'Unknown')}",
-        f"**{job.get('institution', job.get('company', 'Unknown'))}** — {job.get('location', '')}",
+        f"**{job_institution(job) or 'Unknown'}** — {job.get('location', '')}",
         "",
         f"**Type:** {job.get('type', '')}  |  **Deadline:** {job.get('deadline') or 'N/A'}",
     ]
@@ -248,7 +250,7 @@ def load_position(
         hints, cover_letter = agent.prepare_application(job, profile_text)
 
         progress(1.0, desc="Done!")
-        status = f"✅ Loaded: **{job.get('title', '')}** @ {job.get('institution', job.get('company', ''))}"
+        status = f"✅ Loaded: **{job.get('title', '')}** @ {job_institution(job)}"
         return _fmt_job_details(job, match), _fmt_hints(hints), cover_letter, status, idx
 
     except Exception as exc:
@@ -285,7 +287,7 @@ def approve_position(
     if current_idx < 0 or not scored_jobs or current_idx >= len(scored_jobs):
         return approved, "❌ No position loaded."
     job = scored_jobs[current_idx]
-    title, institution = job.get("title", "Unknown"), job.get("institution", job.get("company", "Unknown"))
+    title, institution = job.get("title", "Unknown"), job_institution(job) or "Unknown"
     if any(a["job"].get("title") == title and a["job"].get("institution") == institution for a in approved):
         return approved, f"⚠️ **{title}** @ {institution} already approved."
     new_approved = list(approved) + [{
@@ -299,7 +301,7 @@ def skip_position(current_idx: int, scored_jobs: list) -> str:
     if current_idx < 0 or not scored_jobs or current_idx >= len(scored_jobs):
         return "⏭ Skipped."
     job = scored_jobs[current_idx]
-    return f"⏭ Skipped: **{job.get('title', '')}** @ {job.get('institution', job.get('company', ''))}"
+    return f"⏭ Skipped: **{job.get('title', '')}** @ {job_institution(job)}"
 
 
 def approved_display(approved: list) -> str:
@@ -330,7 +332,7 @@ def export_zip(approved: list) -> tuple:
             for entry in approved:
                 job = entry.get("job") or {}
                 title = job.get("title", "Unknown")
-                institution = job.get("institution", job.get("company", "Unknown"))
+                institution = job_institution(job) or "Unknown"
                 safe = (
                     f"{institution}_{title}"
                     .replace(" ", "_").replace("/", "-").replace("\\", "-")

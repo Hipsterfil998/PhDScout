@@ -1,8 +1,10 @@
 """Job searcher: finds PhD / postdoc / research positions from free public sources.
 
 Sources:
-- jobs.ac.uk (UK academic jobs) — HTML scraping with facet filters; only queried for UK/worldwide
-- FindAPhD (worldwide PhD board) — HTML scraping; handles location filtering globally
+- Euraxess (euraxess.ec.europa.eu) — EU/worldwide research portal, country-filtered
+- mlscientist.com — ML/AI academic positions, WordPress category + search
+- jobs.ac.uk — UK academic jobs (queried only for UK/worldwide locations)
+- DuckDuckGo web search — targeted queries for open calls
 
 All scrapers are wrapped in try/except — if one source is down the rest continue.
 """
@@ -55,15 +57,6 @@ _TYPE_KEYWORDS: dict[str, list[str]] = {
         "staff scientist", "principal investigator", "pi position",
         "lecturer", "professor", "faculty",
     ],
-}
-
-# Position type → keywords appended to search query for sites without native facets
-_TYPE_QUERY: dict[str, str] = {
-    "predoctoral": "predoctoral OR \"early-stage researcher\" OR \"research trainee\"",
-    "phd": "PhD",
-    "postdoc": "postdoc OR \"research associate\" OR \"research fellow\"",
-    "fellowship": "fellowship OR scholarship",
-    "research_staff": "researcher OR lecturer OR professor",
 }
 
 _HEADERS = {
@@ -119,6 +112,11 @@ _MLSCI_TYPE_SLUG: dict[str, str] = {
     "any":            "jobs",
 }
 
+_MLSCI_NON_COUNTRY: frozenset[str] = frozenset({
+    "jobs", "phd-positions", "postdoc-positions", "featured",
+    "conference-calls", "mlnews",
+})
+
 # mlscientist.com country slug mapping (lowercase location → slug)
 _MLSCI_COUNTRY_SLUG: dict[str, str] = {
     "uk": "united-kingdom",
@@ -165,12 +163,6 @@ def _search_mlscientist(field: str, location: str, position_type: str) -> list[d
 
     listings: list[dict] = []
     seen_urls: set[str] = set()
-
-    # Non-type category slugs to ignore when extracting country from CSS classes
-    _MLSCI_NON_COUNTRY = {
-        "jobs", "phd-positions", "postdoc-positions", "featured",
-        "conference-calls", "mlnews",
-    }
 
     for url in urls_to_try:
         try:

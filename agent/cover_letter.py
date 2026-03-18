@@ -6,6 +6,7 @@ import re
 from typing import Any
 
 from agent.llm_client import LLMClient
+from agent.utils import job_institution, job_description
 
 
 _ITALIAN_KEYWORDS = {
@@ -78,7 +79,7 @@ class CoverLetterWriter:
         """
         language = self._detect_language(job)
         title = job.get("title", "Unknown Position")
-        institution = job.get("institution", job.get("company", "Unknown Institution"))
+        institution = job_institution(job) or "Unknown Institution"
 
         prompt = _PROMPT.format(
             profile=profile_text,
@@ -86,7 +87,7 @@ class CoverLetterWriter:
             institution=institution,
             location=job.get("location", "Unknown"),
             pos_type=job.get("type", "research"),
-            description=(job.get("description") or "No description provided.")[:3000],
+            description=job_description(job),
             language=language,
             regen_note=_REGEN_NOTE if regenerate else "",
         )
@@ -108,7 +109,7 @@ class CoverLetterWriter:
             job.get("title", ""),
             job.get("description", ""),
             job.get("location", ""),
-            job.get("institution", job.get("company", "")),
+            job_institution(job),
         ]).lower()
         hits = sum(1 for kw in _ITALIAN_KEYWORDS if kw.lower() in text)
         return "Italian" if hits >= 2 else "English"

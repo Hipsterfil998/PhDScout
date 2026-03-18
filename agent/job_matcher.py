@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any, TypedDict
 
 from agent.llm_client import LLMClient
-from agent.utils import parse_json
+from agent.utils import parse_json, job_institution, job_description
 
 
 class MatchResult(TypedDict, total=False):
@@ -83,10 +83,10 @@ class JobMatcher:
         prompt = _PROMPT.format(
             profile=profile_text,
             title=job.get("title", "Unknown"),
-            institution=job.get("institution", job.get("company", "Unknown")),
+            institution=job_institution(job) or "Unknown",
             location=job.get("location", "Unknown"),
             pos_type=job.get("type", "unknown"),
-            description=(job.get("description") or "No description provided.")[:3000],
+            description=job_description(job),
         )
 
         try:
