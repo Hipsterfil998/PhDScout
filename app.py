@@ -1,4 +1,4 @@
-"""Gradio web interface for the Research Job Agent.
+"""Gradio web interface for PhdScout.
 
 Deployable on HuggingFace Spaces (free tier).
 LLM: HuggingFace Inference API (free, no subscription required).
@@ -402,7 +402,7 @@ _SHARED_TOKEN = os.environ.get("HF_TOKEN", "")
 
 with gr.Blocks(
     theme=gr.themes.Soft(primary_hue="blue", secondary_hue="purple"),
-    title="Research Job Agent",
+    title="PhdScout",
 ) as demo:
     # ---- Session state ----
     profile_state = gr.State(None)
@@ -413,7 +413,7 @@ with gr.Blocks(
     current_idx_state = gr.State(-1)
 
     gr.Markdown("""
-    # Research Job Agent 🎓
+    # PhdScout 🎓
     *AI-powered search for PhD positions, postdocs, fellowships, and research staff roles*
 
     Searches **Euraxess**, **mlscientist.com**, **jobs.ac.uk** (UK only), and the web via **DuckDuckGo**.

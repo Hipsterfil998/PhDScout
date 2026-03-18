@@ -1,5 +1,5 @@
 ---
-title: Research Job Agent
+title: PhdScout
 emoji: 🎓
 colorFrom: blue
 colorTo: purple
@@ -10,7 +10,7 @@ pinned: false
 license: mit
 ---
 
-# Research Job Agent 🎓
+# PhdScout 🎓
 
 AI-powered search agent for PhD positions, postdocs, research fellowships, and academic staff roles.
 
