@@ -218,21 +218,29 @@ class LLMClient:
 
     def _generate_hf(self, system: str, user: str) -> str:
         client = self._get_hf_client()
-        try:
-            result = client.chat_completion(
-                messages=[
-                    {"role": "system", "content": system},
-                    {"role": "user", "content": user},
-                ],
-                max_tokens=config.max_tokens,
-                temperature=0.7,
-            )
-            return result.choices[0].message.content or ""
-        except Exception as exc:
-            raise RuntimeError(
-                f"HuggingFace inference failed: {exc}\n"
-                "Check your HF_API_KEY and that the model is accessible."
-            ) from exc
+        last_exc: Exception | None = None
+        for attempt in range(3):
+            try:
+                result = client.chat_completion(
+                    messages=[
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user},
+                    ],
+                    max_tokens=config.max_tokens,
+                    temperature=0.7,
+                )
+                return result.choices[0].message.content or ""
+            except Exception as exc:
+                last_exc = exc
+                if "503" in str(exc) or "502" in str(exc) or "529" in str(exc):
+                    import time as _time
+                    _time.sleep(2 ** attempt)  # 1s, 2s, 4s
+                    continue
+                break
+        raise RuntimeError(
+            f"HuggingFace inference failed: {last_exc}\n"
+            "Check your HF_API_KEY and that the model is accessible."
+        ) from last_exc
 
     def _stream_hf(self, system: str, user: str) -> Iterator[str]:
         client = self._get_hf_client()
