@@ -10,27 +10,16 @@ pinned: false
 license: mit
 ---
 
-# PhdScout 🎓
+<h1 align="center">PhdScout 🎓</h1>
 
-**AI-powered search agent for PhD positions, postdocs, research fellowships, and academic staff roles.**
+<p align="center">
+  <strong>AI-powered search agent for PhD positions, postdocs, research fellowships, and academic staff roles.</strong>
+</p>
 
-> 🆓 **100% free** — no subscriptions, no API costs, no sign-up required.
-> Live demo on HuggingFace Spaces: [HipFil98/research-job-agent](https://huggingface.co/spaces/HipFil98/research-job-agent)
-
----
-
-## Features
-
-| | |
-|-|-|
-| 🔍 **Multi-source search** | Scrapes Euraxess, mlscientist.com, jobs.ac.uk, and the web in one click |
-| 🌍 **Location filtering** | 40+ countries and regions, or type any custom location |
-| 🎯 **Position type filter** | PhD, predoctoral, postdoc, fellowship, research staff |
-| 🤖 **AI match scoring** | Each position scored 0–100 against your CV profile |
-| 📋 **CV tailoring hints** | Actionable, position-specific suggestions to improve your application |
-| ✉️ **Cover letter drafts** | Personalized letter generated for every position, fully editable |
-| 📦 **ZIP export** | Download all approved cover letters and position details in one archive |
-| 🆓 **Completely free** | Runs on free HuggingFace Inference API models — no account or payment needed |
+<p align="center">
+  🆓 <strong>100% free</strong> — no subscriptions, no API costs, no sign-up required.<br>
+  Live demo on HuggingFace Spaces: <a href="https://huggingface.co/spaces/HipFil98/research-job-agent">HipFil98/research-job-agent</a>
+</p>
 
 ---
 
