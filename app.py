@@ -174,13 +174,13 @@ def run_search(
         return _err("Please upload a CV file first.")
     if not field or not field.strip():
         return _err("Please enter a research field.")
-    if not _SHARED_TOKEN:
-        return _err("No HF_TOKEN configured. Set it as a Space secret.")
+    if not _API_KEY and _BACKEND != "ollama":
+        return _err("No API key configured. Set GROQ_API_KEY (or HF_TOKEN) as a Space secret.")
 
     try:
         from agent.pipeline import JobAgent
 
-        agent = JobAgent(token=_SHARED_TOKEN, model=model_name)
+        agent = JobAgent(model=model_name, backend=_BACKEND, api_key=_API_KEY)
         cv_path = cv_file if isinstance(cv_file, str) else cv_file.name
 
         progress(0, desc="Parsing CV...")
@@ -246,7 +246,7 @@ def load_position(
         match: dict = job.get("match") or {}
 
         from agent.pipeline import JobAgent
-        agent = JobAgent(token=_SHARED_TOKEN, model=model_name)
+        agent = JobAgent(model=model_name, backend=_BACKEND, api_key=_API_KEY)
 
         progress(0.3, desc="Generating tailoring hints...")
         hints, cover_letter = agent.prepare_application(job, profile_text)
@@ -270,7 +270,7 @@ def regenerate_letter(
         return "*No position loaded.*"
     try:
         from agent.pipeline import JobAgent
-        agent = JobAgent(token=_SHARED_TOKEN, model=model_name)
+        agent = JobAgent(model=model_name, backend=_BACKEND, api_key=_API_KEY)
         progress(0.3, desc="Regenerating cover letter...")
         result = agent.regenerate_letter(scored_jobs[current_idx], profile_text)
         progress(1.0)
@@ -372,7 +372,14 @@ def export_zip(approved: list) -> tuple:
 # Gradio Blocks layout
 # ---------------------------------------------------------------------------
 
-MODELS = [
+GROQ_MODELS = [
+    "llama-3.3-70b-versatile",
+    "llama-3.1-8b-instant",
+    "gemma2-9b-it",
+    "mixtral-8x7b-32768",
+]
+
+HF_MODELS = [
     "Qwen/Qwen2.5-7B-Instruct",
     "meta-llama/Llama-3.2-3B-Instruct",
     "microsoft/Phi-3.5-mini-instruct",
@@ -401,8 +408,20 @@ LOCATIONS = [
     "South Africa", "Israel",
 ]
 
-# If a shared token is configured via Space Secrets, users don't need to provide one.
-_SHARED_TOKEN = os.environ.get("HF_TOKEN", "")
+# Backend selection: Groq takes priority over HuggingFace
+_GROQ_KEY = os.environ.get("GROQ_API_KEY", "")
+_HF_TOKEN = os.environ.get("HF_TOKEN", "")
+
+if _GROQ_KEY:
+    _BACKEND = "groq"
+    _API_KEY = _GROQ_KEY
+    MODELS = GROQ_MODELS
+    _MODEL_INFO = "Free via Groq — no user limits"
+else:
+    _BACKEND = "huggingface"
+    _API_KEY = _HF_TOKEN
+    MODELS = HF_MODELS
+    _MODEL_INFO = "Free via HuggingFace Inference API"
 
 with gr.Blocks(
     theme=gr.themes.Soft(primary_hue="blue", secondary_hue="purple"),
@@ -464,7 +483,7 @@ with gr.Blocks(
                         label="Model",
                         choices=MODELS,
                         value=MODELS[0],
-                        info="All are free via HF Inference API",
+                        info=_MODEL_INFO,
                     )
             search_btn = gr.Button("Parse CV & Search Positions", variant="primary", size="lg")
             search_status = gr.Markdown("*Ready. Fill in the form and click Search.*")

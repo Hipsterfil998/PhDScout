@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, TypedDict
 
-from agent.llm_client import LLMClient
+from agent.llm_client import LLMClient, LLMQuotaError
 from agent.utils import parse_json, job_institution, job_description
 
 
@@ -101,6 +101,8 @@ class JobMatcher:
 
         try:
             raw = self.llm.generate(system=_SYSTEM, user=prompt, json_mode=True)
+        except LLMQuotaError:
+            raise  # propagate — caller should surface this to the user
         except RuntimeError as exc:
             return _fallback(str(exc))
 
