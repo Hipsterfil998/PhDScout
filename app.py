@@ -420,8 +420,8 @@ if _GROQ_KEY:
 else:
     _BACKEND = "huggingface"
     _API_KEY = _HF_TOKEN
-    MODELS = HF_MODELS
-    _MODEL_INFO = "Free via HuggingFace Inference API"
+    MODELS = GROQ_MODELS  # always show Groq models; key must be set in Space Secrets
+    _MODEL_INFO = "Set GROQ_API_KEY in Space Secrets to enable inference"
 
 with gr.Blocks(
     theme=gr.themes.Soft(primary_hue="blue", secondary_hue="purple"),
