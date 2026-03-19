@@ -33,7 +33,7 @@ This installs:
 |---|---|
 | `openai>=1.0.0` | OpenAI-compatible client used for Groq and Ollama |
 | `huggingface_hub>=0.20.0` | HuggingFace Serverless Inference client |
-| `duckduckgo-search>=6.0.0` | DuckDuckGo web search for the `WebSearchScraper` |
+| `duckduckgo-search>=6.0.0` | Reserved — `WebSearchScraper` not active by default |
 | `pdfplumber>=0.10.0` | PDF text extraction |
 | `python-docx>=1.0.0` | DOCX text extraction |
 | `click>=8.0.0` | CLI framework for `main.py` |

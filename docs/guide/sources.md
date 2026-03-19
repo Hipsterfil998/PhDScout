@@ -1,6 +1,6 @@
 # Job Sources
 
-PhdScout searches four independent job sources in every query. All sources are publicly accessible with no authentication required. The `JobSearcher` runs them sequentially (with a polite 1.5-second delay between requests) and deduplicates results by URL.
+PhdScout searches three independent job sources in every query. All sources are publicly accessible with no authentication required. The `JobSearcher` runs them sequentially (with a polite 1.5-second delay between requests) and deduplicates results by URL.
 
 ---
 
@@ -108,7 +108,7 @@ Position type facets:
 | `postdoc` | Appends `postdoc` to the keyword query |
 | `fellowship` | Appends `fellowship` to the keyword query |
 | `research_staff` | Appends `researcher` to the keyword query |
-| `any` | No modification |
+| `predoctoral` | No modification (no native facet) |
 
 Up to 25 results are extracted per search.
 
@@ -124,55 +124,12 @@ jobs.ac.uk is the best source for UK-specific positions, especially UKRI-funded 
 
 ---
 
-## DuckDuckGo Web Search
-
-**URL:** Targets any academic website via DuckDuckGo
-**Scraper:** `agent/scrapers/web.py` — `WebSearchScraper`
-**Source tag in results:** `web`
-**Dependency:** `duckduckgo-search` package
-
-### What it is
-
-The `WebSearchScraper` uses the `duckduckgo-search` library to run targeted queries and find job postings on institutional pages, research group websites, and smaller job boards not covered by the other scrapers. It is the most flexible source and can find positions anywhere in the world.
-
-### How it works
-
-Three queries are built per search, combining the field, position type, location, and current year:
-
-```
-"machine learning" PhD studentship "Germany" "call for applications" 2025
-"machine learning" PhD studentship "Germany" "open position" OR "vacancy" 2025 apply
-"machine learning" PhD studentship "Germany" university funded 2025 deadline
-```
-
-Up to 8 results per query are fetched. Results are filtered to:
-
-1. Contain the current year (removes outdated postings).
-2. Contain at least one "job signal" keyword such as `call for applications`, `open position`, `vacancy`, `deadline`, `apply now`, etc.
-
-### Supported locations
-
-Any location can be specified as a free-text string. The location is quoted and added directly to the search query. This makes `WebSearchScraper` the most flexible source for countries not covered by Euraxess or mlscientist (e.g. Singapore, South Korea, Brazil).
-
-### Limitations
-
-- Results may include false positives (conference calls, non-academic jobs) that pass the keyword filter.
-- The `institution` field is always empty — it is inferred from the title text only.
-- DuckDuckGo rate limits may occasionally return empty results; the scraper silently continues.
-- Results depend on search engine indexing and may miss recently posted positions.
-
-!!! note "duckduckgo-search package"
-    If `duckduckgo-search` is not installed, `WebSearchScraper.scrape()` returns an empty list silently. This is intentional — the other three sources continue to work.
-
----
-
 ## Source Activation Summary
 
 | Source | Always active | Only for UK/Worldwide |
 |---|---|---|
 | Euraxess | Yes | — |
 | mlscientist.com | Yes | — |
-| DuckDuckGo | Yes | — |
 | jobs.ac.uk | — | Yes (UK, England, Scotland, Wales, Great Britain, Worldwide, blank) |
 
 ---
@@ -183,4 +140,4 @@ After all scrapers run, `JobSearcher._deduplicate()` removes listings with dupli
 
 Results are then filtered by field relevance: the query field is split into phrases and each phrase must appear either in the job title, or have all significant words (4+ characters) present in either the title or description.
 
-Finally, if a `--type` filter other than `any` is specified, only positions whose detected type matches (or is `other`) are retained. Results are sorted by description length (longer descriptions first, as they tend to be more complete).
+Finally, if a position type filter is specified, only positions whose detected type matches (or is `other`) are retained. Results are sorted by description length (longer descriptions first, as they tend to be more complete).

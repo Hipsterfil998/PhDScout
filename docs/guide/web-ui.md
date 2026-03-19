@@ -39,15 +39,14 @@ Choose from the dropdown or type a custom value. The dropdown includes:
 - Individual countries: all EU member states, UK, US, Canada, Australia, Japan, and more
 
 !!! note "Location support varies by source"
-    Euraxess has server-side country filters for most European countries. mlscientist.com has country slugs for about a dozen countries. jobs.ac.uk is UK-only. DuckDuckGo accepts any location as a text query. See [Job Sources](sources.md) for details.
+    Euraxess has server-side country filters for most European countries. mlscientist.com has country slugs for about a dozen countries. jobs.ac.uk is UK-only. See [Job Sources](sources.md) for details.
 
 ### Position Type
 
 | Value | What it matches |
 |---|---|
-| `any` | All position types |
 | `predoctoral` | Pre-doctoral, early-stage researcher, master's student positions |
-| `phd` | PhD studentships, doctoral positions, graduate student roles |
+| `phd` | PhD studentships, doctoral positions, graduate student roles (default) |
 | `postdoc` | Postdoctoral positions, research associates, research fellows |
 | `fellowship` | Fellowships, Marie Curie, ERC grants, scholarships |
 | `research_staff` | Research scientists, PIs, lecturers, professors |

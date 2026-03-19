@@ -68,7 +68,7 @@ PhdScout is structured as a layered agent system. The interface layer (Gradio UI
 | `agent/scrapers/euraxess.py` | `EuraxessScraper` | Euraxess EU portal |
 | `agent/scrapers/mlscientist.py` | `MLScientistScraper` | mlscientist.com WordPress blog |
 | `agent/scrapers/jobs_ac_uk.py` | `JobsAcUkScraper` | jobs.ac.uk UK academic board |
-| `agent/scrapers/web.py` | `WebSearchScraper` | DuckDuckGo targeted queries |
+| `agent/scrapers/web.py` | `WebSearchScraper` | Available but not active by default |
 | `config.py` | `AppConfig`, `EmailConfig` | Singleton config from `.env` |
 | `app.py` | — | Gradio Blocks UI; event handlers |
 | `main.py` | — | Click CLI entry point; Rich display helpers |
@@ -105,7 +105,7 @@ cv.pdf ──► CVParser.extract_raw_text()
               │
     ┌─────────┼──────────────┐
     │         │              │
-EuraxessScraper  MLScientist  WebSearch
+EuraxessScraper  MLScientist
     │         │              │
     └─────────┼──────────────┘
               │
@@ -113,7 +113,7 @@ EuraxessScraper  MLScientist  WebSearch
               │
     _field_matches() filter
               │
-    type filter (if not "any")
+    type filter
               │
     sort by description length
               │

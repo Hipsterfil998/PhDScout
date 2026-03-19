@@ -61,7 +61,7 @@ def search_jobs(
     self,
     field: str,
     location: str = "Europe",
-    position_type: str = "any",
+    position_type: str = "phd",
 ) -> list[dict]
 ```
 
@@ -71,7 +71,7 @@ Search all configured job boards and return deduplicated, field-filtered listing
 |---|---|---|
 | `field` | `str` | Research field, e.g. `"machine learning"`. Comma-separated values work: `"NLP, natural language processing"`. |
 | `location` | `str` | Location string, e.g. `"Germany"`, `"Europe"`, `"UK"`. Default: `"Europe"`. |
-| `position_type` | `str` | One of `"phd"`, `"postdoc"`, `"fellowship"`, `"research_staff"`, `"predoctoral"`, `"other"`, `"any"`. Default: `"any"`. |
+| `position_type` | `str` | One of `"phd"`, `"postdoc"`, `"fellowship"`, `"research_staff"`, `"predoctoral"`. Default: `"phd"`. |
 
 **Returns:** List of `JobListing` dicts, each with keys: `title`, `institution`, `location`, `url`, `description`, `deadline`, `email`, `source`, `type`.
 

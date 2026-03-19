@@ -10,7 +10,6 @@ from agent.scrapers import (
     EuraxessScraper,
     JobsAcUkScraper,
     MLScientistScraper,
-    WebSearchScraper,
 )
 from agent.scrapers.base import BaseScraper, _DELAY
 
@@ -61,7 +60,7 @@ class JobSearcher:
         Returns:
             Deduplicated list of :class:`JobListing` dicts, richer entries first.
         """
-        pt = (position_type or "any").lower()
+        pt = (position_type or "phd").lower()
         location = self._normalize_location(location)
 
         all_listings: list[dict] = []
@@ -100,7 +99,6 @@ class JobSearcher:
         scrapers: list[BaseScraper] = [
             EuraxessScraper(),
             MLScientistScraper(),
-            WebSearchScraper(),
         ]
         if location.lower() in _UK_LOCATIONS or location.lower() in _WORLDWIDE_LOCATIONS:
             scrapers.insert(0, JobsAcUkScraper())
