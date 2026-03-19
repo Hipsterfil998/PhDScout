@@ -19,6 +19,10 @@ from typing import Iterator
 from config import config
 
 
+class LLMQuotaError(RuntimeError):
+    """Raised when the HuggingFace free-tier quota is exhausted (HTTP 402)."""
+
+
 class LLMClient:
     """Unified LLM client supporting Ollama and HuggingFace backends.
 
@@ -42,6 +46,7 @@ class LLMClient:
         # Lazily initialised clients
         self._openai_client = None
         self._hf_client = None
+        self._groq_client = None
 
     # ------------------------------------------------------------------
     # Internal: backend initialisation
@@ -62,6 +67,23 @@ class LLMClient:
                 api_key="ollama",  # Ollama ignores the key — any non-empty string works
             )
         return self._openai_client
+
+    def _get_groq_client(self):
+        """Return (and cache) an openai.OpenAI client pointed at Groq."""
+        if not hasattr(self, "_groq_client") or self._groq_client is None:
+            try:
+                from openai import OpenAI  # type: ignore
+            except ImportError as exc:
+                raise ImportError(
+                    "The 'openai' package is required for the Groq backend.\n"
+                    "Install it with:  pip install openai>=1.0.0"
+                ) from exc
+            api_key = self._token_override or config.groq_api_key
+            self._groq_client = OpenAI(
+                base_url=config.groq_base_url,
+                api_key=api_key,
+            )
+        return self._groq_client
 
     def _get_hf_client(self):
         """Return (and cache) a huggingface_hub.InferenceClient."""
@@ -129,12 +151,14 @@ class LLMClient:
 
         if self.backend == "ollama":
             return self._generate_ollama(system, user, json_mode=json_mode)
+        elif self.backend == "groq":
+            return self._generate_groq(system, user, json_mode=json_mode)
         elif self.backend == "huggingface":
             return self._generate_hf(system, user)
         else:
             raise RuntimeError(
                 f"Unknown LLM backend: '{self.backend}'. "
-                "Set LLM_BACKEND=ollama or LLM_BACKEND=huggingface in your .env."
+                "Set LLM_BACKEND=ollama, groq, or huggingface in your .env."
             )
 
     def stream_generate(self, system: str, user: str) -> Iterator[str]:
@@ -149,6 +173,8 @@ class LLMClient:
         """
         if self.backend == "ollama":
             yield from self._stream_ollama(system, user)
+        elif self.backend == "groq":
+            yield from self._stream_groq(system, user)
         elif self.backend == "huggingface":
             yield from self._stream_hf(system, user)
         else:
@@ -213,6 +239,47 @@ class LLMClient:
             raise RuntimeError(f"Ollama streaming failed: {exc}") from exc
 
     # ------------------------------------------------------------------
+    # Groq implementation (OpenAI-compatible API)
+    # ------------------------------------------------------------------
+
+    def _generate_groq(self, system: str, user: str, json_mode: bool = False) -> str:
+        client = self._get_groq_client()
+        kwargs: dict = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            "max_tokens": config.max_tokens,
+        }
+        if json_mode:
+            kwargs["response_format"] = {"type": "json_object"}
+        try:
+            response = client.chat.completions.create(**kwargs)
+            return response.choices[0].message.content or ""
+        except Exception as exc:
+            raise RuntimeError(f"Groq inference failed: {exc}") from exc
+
+    def _stream_groq(self, system: str, user: str) -> Iterator[str]:
+        client = self._get_groq_client()
+        try:
+            stream = client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+                max_tokens=config.max_tokens,
+                stream=True,
+            )
+            for chunk in stream:
+                delta = chunk.choices[0].delta
+                if delta and delta.content:
+                    yield delta.content
+        except Exception as exc:
+            raise RuntimeError(f"Groq streaming failed: {exc}") from exc
+
+    # ------------------------------------------------------------------
     # HuggingFace implementation (via InferenceClient)
     # ------------------------------------------------------------------
 
@@ -232,7 +299,14 @@ class LLMClient:
                 return result.choices[0].message.content or ""
             except Exception as exc:
                 last_exc = exc
-                if "503" in str(exc) or "502" in str(exc) or "529" in str(exc):
+                err_str = str(exc)
+                if "402" in err_str:
+                    raise LLMQuotaError(
+                        "HuggingFace quota exceeded (402 Payment Required).\n"
+                        "Switch to a different model in the LLM Settings panel, "
+                        "or wait for your free-tier quota to reset."
+                    ) from exc
+                if "503" in err_str or "502" in err_str or "529" in err_str:
                     import time as _time
                     _time.sleep(2 ** attempt)  # 1s, 2s, 4s
                     continue

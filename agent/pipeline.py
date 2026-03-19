@@ -15,16 +15,16 @@ from agent.cover_letter import CoverLetterWriter
 class JobAgent:
     """Orchestrates CV parsing, job search, scoring, and application generation.
 
-    Each instance holds its own LLM client configured with the given token and
-    model — safe to instantiate per-request (no shared mutable state).
+    Each instance holds its own LLM client — safe to instantiate per-request.
 
     Args:
-        token:   HuggingFace API token.
-        model:   HuggingFace model ID (e.g. "mistralai/Mistral-7B-Instruct-v0.3").
+        model:    Model ID for the selected backend.
+        backend:  "groq" | "huggingface" | "ollama"
+        api_key:  API key for the selected backend (not needed for Ollama).
     """
 
-    def __init__(self, token: str, model: str) -> None:
-        self.llm = LLMClient(model=model, backend="huggingface", token=token)
+    def __init__(self, model: str, backend: str = "groq", api_key: str = "") -> None:
+        self.llm = LLMClient(model=model, backend=backend, token=api_key or None)
         self.parser = CVParser(self.llm)
         self.searcher = JobSearcher()
         self.matcher = JobMatcher(self.llm)

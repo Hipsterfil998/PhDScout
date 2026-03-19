@@ -47,6 +47,10 @@ class AppConfig:
         default_factory=lambda: os.getenv("HF_MODEL", "mistralai/Mistral-7B-Instruct-v0.3")
     )
 
+    # Groq settings (recommended free cloud backend)
+    groq_api_key: str = field(default_factory=lambda: os.getenv("GROQ_API_KEY", ""))
+    groq_base_url: str = "https://api.groq.com/openai/v1"
+
     # Generation settings
     max_tokens: int = 4096
 
@@ -95,10 +99,16 @@ class AppConfig:
                     "Free HuggingFace inference may be rate-limited or unavailable. "
                     "Get a free key at https://huggingface.co/settings/tokens"
                 )
+        elif self.llm_backend == "groq":
+            if not self.groq_api_key:
+                print(
+                    "[WARNING] GROQ_API_KEY is not set. "
+                    "Get a free key at https://console.groq.com/keys"
+                )
         else:
             print(
                 f"[WARNING] Unknown LLM_BACKEND '{self.llm_backend}'. "
-                "Supported values: 'ollama', 'huggingface'."
+                "Supported values: 'ollama', 'huggingface', 'groq'."
             )
 
 
