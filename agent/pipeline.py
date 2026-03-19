@@ -6,7 +6,7 @@ from typing import Any
 
 from agent.llm_client import LLMClient
 from agent.cv_parser import CVParser, CVProfile
-from agent.job_searcher import JobSearcher
+from agent.searcher import JobSearcher
 from agent.job_matcher import JobMatcher
 from agent.cv_tailor import CVTailor, TailoringHints
 from agent.cover_letter import CoverLetterWriter

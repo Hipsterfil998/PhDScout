@@ -1,17 +1,13 @@
-"""CV parser: reads PDF / DOCX / TXT and returns a structured research profile."""
+"""CV parser — reads PDF/DOCX/TXT and returns a structured research profile."""
 
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, TypedDict
+from typing import TypedDict
 
-from agent.llm_client import LLMClient
+from agent.base_service import BaseLLMService
 from agent.utils import parse_json
 
-
-# ---------------------------------------------------------------------------
-# Type definition
-# ---------------------------------------------------------------------------
 
 class CVProfile(TypedDict, total=False):
     name: str
@@ -26,52 +22,6 @@ class CVProfile(TypedDict, total=False):
     languages: list[dict]          # language, level
     references: list[dict]
 
-
-# ---------------------------------------------------------------------------
-# Raw text extraction (module-level — pure I/O, no LLM)
-# ---------------------------------------------------------------------------
-
-def _extract_text_from_pdf(path: Path) -> str:
-    import pdfplumber  # type: ignore
-    pages: list[str] = []
-    with pdfplumber.open(path) as pdf:
-        for page in pdf.pages:
-            text = page.extract_text()
-            if text:
-                pages.append(text)
-    return "\n".join(pages)
-
-
-def _extract_text_from_docx(path: Path) -> str:
-    from docx import Document  # type: ignore
-    doc = Document(str(path))
-    paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                if cell.text.strip():
-                    paragraphs.append(cell.text.strip())
-    return "\n".join(paragraphs)
-
-
-def extract_raw_text(cv_path: str | Path) -> str:
-    """Extract raw text from a CV file (.pdf, .docx, .txt)."""
-    path = Path(cv_path)
-    if not path.exists():
-        raise FileNotFoundError(f"CV file not found: {path}")
-    suffix = path.suffix.lower()
-    if suffix == ".pdf":
-        return _extract_text_from_pdf(path)
-    elif suffix in (".docx", ".doc"):
-        return _extract_text_from_docx(path)
-    elif suffix == ".txt":
-        return path.read_text(encoding="utf-8", errors="replace")
-    raise ValueError(f"Unsupported CV format '{suffix}'. Use .pdf, .docx, or .txt.")
-
-
-# ---------------------------------------------------------------------------
-# Prompts
-# ---------------------------------------------------------------------------
 
 _SYSTEM = (
     "You are an expert academic CV parser. "
@@ -106,25 +56,24 @@ CV TEXT:
 ---"""
 
 
-# ---------------------------------------------------------------------------
-# CVParser class
-# ---------------------------------------------------------------------------
-
-class CVParser:
+class CVParser(BaseLLMService):
     """Parses CV files into structured CVProfile dicts using an LLM."""
 
-    def __init__(self, llm: LLMClient) -> None:
-        self.llm = llm
+    _SYSTEM = _SYSTEM
 
     def parse(self, cv_path: str | Path) -> CVProfile:
-        """Parse a CV file and return a structured CVProfile."""
-        raw_text = extract_raw_text(cv_path)
+        """Parse a CV file and return a structured CVProfile.
+
+        Note: uses ``_generate`` (not ``_generate_json``) so that LLM/network
+        errors surface directly to the caller rather than silently returning
+        an empty profile.
+        """
+        raw_text = self.extract_raw_text(cv_path)
         if not raw_text.strip():
             raise ValueError("Could not extract any text from the CV file.")
 
         prompt = _PROMPT.format(cv_text=raw_text[:8000])
-        raw_json = self.llm.generate(system=_SYSTEM, user=prompt, json_mode=True)
-
+        raw_json = self._generate(prompt, json_mode=True)
         result = parse_json(raw_json)
         if result is None:
             return {"name": "Unknown", "summary": raw_json[:500]}
@@ -159,10 +108,15 @@ class CVParser:
         if pubs:
             lines.append(f"Publications ({len(pubs)}):")
             for p in pubs[:5]:
-                lines.append(f"  - \"{p.get('title', '')}\" — {p.get('venue', '')} {p.get('year', '')}")
+                lines.append(
+                    f"  - \"{p.get('title', '')}\" — {p.get('venue', '')} {p.get('year', '')}"
+                )
 
         for e in (profile.get("experience") or [])[:4]:
-            lines.append(f"Experience: {e.get('title', '')} at {e.get('institution', '')} ({e.get('dates', '')})")
+            lines.append(
+                f"Experience: {e.get('title', '')} at {e.get('institution', '')} "
+                f"({e.get('dates', '')})"
+            )
 
         skills: dict = profile.get("skills") or {}
         all_skills = (skills.get("programming") or []) + (skills.get("tools") or [])
@@ -185,3 +139,45 @@ class CVParser:
             )
 
         return "\n".join(lines)
+
+    # ------------------------------------------------------------------
+    # Static helpers — raw text extraction
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def extract_raw_text(cv_path: str | Path) -> str:
+        """Extract raw text from a CV file (.pdf, .docx, .txt)."""
+        path = Path(cv_path)
+        if not path.exists():
+            raise FileNotFoundError(f"CV file not found: {path}")
+        suffix = path.suffix.lower()
+        if suffix == ".pdf":
+            return CVParser._from_pdf(path)
+        elif suffix in (".docx", ".doc"):
+            return CVParser._from_docx(path)
+        elif suffix == ".txt":
+            return path.read_text(encoding="utf-8", errors="replace")
+        raise ValueError(f"Unsupported CV format '{suffix}'. Use .pdf, .docx, or .txt.")
+
+    @staticmethod
+    def _from_pdf(path: Path) -> str:
+        import pdfplumber  # type: ignore
+        pages: list[str] = []
+        with pdfplumber.open(path) as pdf:
+            for page in pdf.pages:
+                text = page.extract_text()
+                if text:
+                    pages.append(text)
+        return "\n".join(pages)
+
+    @staticmethod
+    def _from_docx(path: Path) -> str:
+        from docx import Document  # type: ignore
+        doc = Document(str(path))
+        paragraphs = [p.text for p in doc.paragraphs if p.text.strip()]
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    if cell.text.strip():
+                        paragraphs.append(cell.text.strip())
+        return "\n".join(paragraphs)

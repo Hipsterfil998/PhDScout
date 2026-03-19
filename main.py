@@ -352,7 +352,7 @@ def main(
 
     from agent.llm_client import LLMClient
     from agent.cv_parser import CVParser
-    from agent.job_searcher import JobSearcher
+    from agent.searcher import JobSearcher
     from agent.job_matcher import JobMatcher
 
     llm = LLMClient(model=model)

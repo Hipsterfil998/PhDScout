@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
-import re
 from typing import Any
 
-from agent.llm_client import LLMClient
-from agent.utils import job_institution, job_description
-
+from agent.base_service import BaseLLMService
+from agent.llm_client import LLMQuotaError
+from agent.utils import job_description, job_institution
 
 _ITALIAN_KEYWORDS = {
     "ricerca", "lavoro", "azienda", "esperienza", "candidato", "assunzione",
@@ -61,11 +60,10 @@ _DRAFT_HEADER = (
 )
 
 
-class CoverLetterWriter:
+class CoverLetterWriter(BaseLLMService):
     """Generates DRAFT cover letters for research positions."""
 
-    def __init__(self, llm: LLMClient) -> None:
-        self.llm = llm
+    _SYSTEM = _SYSTEM
 
     def generate(
         self,
@@ -73,18 +71,16 @@ class CoverLetterWriter:
         profile_text: str,
         regenerate: bool = False,
     ) -> str:
-        """Generate a draft cover letter.
+        """Generate a draft cover letter prefixed with a DRAFT notice.
 
-        Returns the letter prefixed with a DRAFT notice.
+        LLMQuotaError propagates — it must be surfaced to the user.
+        Other LLM errors return a graceful error string.
         """
         language = self._detect_language(job)
-        title = job.get("title", "Unknown Position")
-        institution = job_institution(job) or "Unknown Institution"
-
         prompt = _PROMPT.format(
             profile=profile_text,
-            title=title,
-            institution=institution,
+            title=job.get("title", "Unknown Position"),
+            institution=job_institution(job) or "Unknown Institution",
             location=job.get("location", "Unknown"),
             pos_type=job.get("type", "research"),
             description=job_description(job),
@@ -93,7 +89,9 @@ class CoverLetterWriter:
         )
 
         try:
-            letter = self.llm.generate(system=_SYSTEM, user=prompt)
+            letter = self._generate(prompt)
+        except LLMQuotaError:
+            raise
         except RuntimeError as exc:
             return (
                 "[DRAFT — GENERATION FAILED]\n\n"

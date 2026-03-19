@@ -70,7 +70,7 @@ class LLMClient:
 
     def _get_groq_client(self):
         """Return (and cache) an openai.OpenAI client pointed at Groq."""
-        if not hasattr(self, "_groq_client") or self._groq_client is None:
+        if self._groq_client is None:
             try:
                 from openai import OpenAI  # type: ignore
             except ImportError as exc:

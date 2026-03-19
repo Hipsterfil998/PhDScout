@@ -1,11 +1,11 @@
-"""CV tailoring hints: actionable, position-specific suggestions (not a rewrite)."""
+"""CV tailoring hints — actionable, position-specific suggestions."""
 
 from __future__ import annotations
 
 from typing import Any, TypedDict
 
-from agent.llm_client import LLMClient
-from agent.utils import parse_json, job_institution, job_description
+from agent.base_service import BaseLLMService
+from agent.utils import job_description, job_institution
 
 
 class TailoringHints(TypedDict, total=False):
@@ -48,7 +48,6 @@ Produce a JSON object with EXACTLY these keys:
 
 Rules: be specific, reference actual CV entries, do NOT suggest fabricating anything."""
 
-
 _FALLBACK_ORDER = ["Education", "Research Interests", "Publications", "Experience", "Skills", "Awards"]
 
 
@@ -77,21 +76,18 @@ def format_hints_text(hints: TailoringHints) -> str:
     if hints.get("keywords_to_add"):
         lines += ["KEYWORDS TO ADD:", "  " + ", ".join(hints["keywords_to_add"]), ""]
     if hints.get("suggested_order"):
-        lines += ["SUGGESTED SECTION ORDER:"] + [f"  {i}. {s}" for i, s in enumerate(hints["suggested_order"], 1)]
+        lines += ["SUGGESTED SECTION ORDER:"] + [
+            f"  {i}. {s}" for i, s in enumerate(hints["suggested_order"], 1)
+        ]
     return "\n".join(lines)
 
 
-class CVTailor:
+class CVTailor(BaseLLMService):
     """Generates per-position CV tailoring hints using an LLM."""
 
-    def __init__(self, llm: LLMClient) -> None:
-        self.llm = llm
+    _SYSTEM = _SYSTEM
 
-    def generate(
-        self,
-        job: dict[str, Any],
-        profile_text: str,
-    ) -> TailoringHints:
+    def generate(self, job: dict[str, Any], profile_text: str) -> TailoringHints:
         """Generate actionable tailoring hints for a specific position."""
         prompt = _PROMPT.format(
             title=job.get("title", "Unknown"),
@@ -101,12 +97,8 @@ class CVTailor:
             profile=profile_text,
         )
 
-        try:
-            raw = self.llm.generate(system=_SYSTEM, user=prompt, json_mode=True)
-        except RuntimeError as exc:
-            return _fallback(str(exc))
-
-        hints: TailoringHints = parse_json(raw) or _fallback("JSON parse error")
+        result = self._generate_json(prompt)
+        hints: TailoringHints = result if result is not None else _fallback("LLM call or JSON parse failed")
 
         hints.setdefault("headline_suggestion", "")
         hints.setdefault("skills_to_highlight", [])

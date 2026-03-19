@@ -1,7 +1,7 @@
 """Gradio web interface for PhdScout.
 
 Deployable on HuggingFace Spaces (free tier).
-LLM: HuggingFace Inference API (free, no subscription required).
+LLM: Groq (free API, no subscription required — set GROQ_API_KEY as Space Secret).
 
 Job sources:
 - Euraxess (euraxess.ec.europa.eu) — EU/worldwide research portal, country-filtered
@@ -12,7 +12,6 @@ Job sources:
 
 from __future__ import annotations
 
-import io
 import json
 import os
 import tempfile
@@ -22,6 +21,7 @@ from typing import Any
 
 import gradio as gr
 
+from agent.pipeline import JobAgent
 from agent.utils import job_institution
 
 
@@ -57,15 +57,6 @@ def _fmt_profile(profile: dict) -> str:
     if all_skills:
         lines.append(f"\n**Technical Skills:** {', '.join(all_skills[:20])}")
     return "\n".join(lines)
-
-
-def _fmt_jobs_table(jobs: list) -> list[list]:
-    return [
-        [i, j.get("title", ""), job_institution(j),
-         j.get("location", ""), j.get("type", ""), j.get("source", ""),
-         j.get("deadline") or "—"]
-        for i, j in enumerate(jobs, 1)
-    ]
 
 
 def _fmt_scored_table(jobs: list) -> list[list]:
@@ -141,6 +132,23 @@ def _fmt_hints(hints: dict) -> str:
     return "\n".join(lines)
 
 
+def _fmt_approved(approved: list) -> str:
+    if not approved:
+        return "*No applications approved yet.*"
+    lines = [f"### Approved Applications ({len(approved)})", "",
+             "| # | Title | Institution | Approved At |",
+             "|---|-------|-------------|-------------|"]
+    for i, entry in enumerate(approved, 1):
+        job = entry.get("job") or {}
+        ts = entry.get("approved_at", "")
+        try:
+            ts = datetime.fromisoformat(ts).strftime("%Y-%m-%d %H:%M")
+        except (ValueError, TypeError):
+            pass
+        lines.append(f"| {i} | {job.get('title', '')} | {job.get('institution', '')} | {ts} |")
+    return "\n".join(lines)
+
+
 def _position_choices(scored_jobs: list) -> list[str]:
     return [
         f"[{(j.get('match') or {}).get('match_score', 0)}] "
@@ -162,12 +170,12 @@ def run_search(
     model_name: str,
     progress=gr.Progress(track_tqdm=True),
 ) -> tuple:
-    """Parse CV, search job boards, score positions. Returns 9 outputs."""
+    """Parse CV, search job boards, score positions. Returns 7 outputs."""
 
     def _err(msg: str) -> tuple:
         return (
-            "*Error — see status message.*", [], [], f"❌ {msg}",
-            None, "", [], [], gr.update(choices=[], value=None),
+            "*Error — see status message.*", [], f"❌ {msg}",
+            None, "", [], gr.update(choices=[], value=None),
         )
 
     if cv_file is None:
@@ -175,11 +183,9 @@ def run_search(
     if not field or not field.strip():
         return _err("Please enter a research field.")
     if not _API_KEY and _BACKEND != "ollama":
-        return _err("No API key configured. Set GROQ_API_KEY (or HF_TOKEN) as a Space secret.")
+        return _err("No API key configured. Set GROQ_API_KEY as a Space secret.")
 
     try:
-        from agent.pipeline import JobAgent
-
         agent = JobAgent(model=model_name, backend=_BACKEND, api_key=_API_KEY)
         cv_path = cv_file if isinstance(cv_file, str) else cv_file.name
 
@@ -195,28 +201,26 @@ def run_search(
 
         if not jobs:
             return (
-                _fmt_profile(profile), [], [], "⚠️ No positions found.",
-                profile, profile_text, [], [], gr.update(choices=[], value=None),
+                _fmt_profile(profile), [], "⚠️ No positions found.",
+                profile, profile_text, [], gr.update(choices=[], value=None),
             )
 
         progress(0.6, desc="Scoring positions...")
         scored = agent.score_jobs(jobs, profile_text)
-        recommended = [j for j in scored if j["match"].get("match_score", 0) >= min_score]
+        above = sum(1 for j in scored if j["match"].get("match_score", 0) >= min_score)
 
         progress(1.0, desc="Done!")
         status = (
-            f"✅ Found **{len(jobs)}** positions scored — "
-            f"**{len(recommended)}** above {min_score}. "
+            f"✅ Found **{len(jobs)}** positions — "
+            f"**{above}** above score {min_score}. "
             f"All {len(scored)} are available to review."
         )
         return (
             _fmt_profile(profile),
-            _fmt_jobs_table(jobs),
-            _fmt_scored_table(recommended),
+            _fmt_scored_table(scored),
             status,
             profile,
             profile_text,
-            jobs,
             scored,
             gr.update(choices=_position_choices(scored), value=None),
         )
@@ -245,7 +249,6 @@ def load_position(
         job = scored_jobs[idx]
         match: dict = job.get("match") or {}
 
-        from agent.pipeline import JobAgent
         agent = JobAgent(model=model_name, backend=_BACKEND, api_key=_API_KEY)
 
         progress(0.3, desc="Generating tailoring hints...")
@@ -269,7 +272,6 @@ def regenerate_letter(
     if current_idx < 0 or not scored_jobs or current_idx >= len(scored_jobs):
         return "*No position loaded.*"
     try:
-        from agent.pipeline import JobAgent
         agent = JobAgent(model=model_name, backend=_BACKEND, api_key=_API_KEY)
         progress(0.3, desc="Regenerating cover letter...")
         result = agent.regenerate_letter(scored_jobs[current_idx], profile_text)
@@ -297,30 +299,6 @@ def approve_position(
         "notes": notes or "", "approved_at": datetime.now().isoformat(),
     }]
     return new_approved, f"✅ Approved: **{title}** @ {institution} ({len(new_approved)} total)"
-
-
-def skip_position(current_idx: int, scored_jobs: list) -> str:
-    if current_idx < 0 or not scored_jobs or current_idx >= len(scored_jobs):
-        return "⏭ Skipped."
-    job = scored_jobs[current_idx]
-    return f"⏭ Skipped: **{job.get('title', '')}** @ {job_institution(job)}"
-
-
-def approved_display(approved: list) -> str:
-    if not approved:
-        return "*No applications approved yet.*"
-    lines = [f"### Approved Applications ({len(approved)})", "",
-             "| # | Title | Institution | Approved At |",
-             "|---|-------|-------------|-------------|"]
-    for i, entry in enumerate(approved, 1):
-        job = entry.get("job") or {}
-        ts = entry.get("approved_at", "")
-        try:
-            ts = datetime.fromisoformat(ts).strftime("%Y-%m-%d %H:%M")
-        except (ValueError, TypeError):
-            pass
-        lines.append(f"| {i} | {job.get('title', '')} | {job.get('institution', '')} | {ts} |")
-    return "\n".join(lines)
 
 
 def export_zip(approved: list) -> tuple:
@@ -368,23 +346,24 @@ def export_zip(approved: list) -> tuple:
         return None, f"❌ Export failed: {exc}"
 
 
+def letter_to_file(text: str) -> str | None:
+    if not text:
+        return None
+    f = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8")
+    f.write(text)
+    f.close()
+    return f.name
+
+
 # ---------------------------------------------------------------------------
 # Gradio Blocks layout
 # ---------------------------------------------------------------------------
 
-GROQ_MODELS = [
+MODELS = [
     "llama-3.3-70b-versatile",
     "llama-3.1-8b-instant",
     "gemma2-9b-it",
     "mixtral-8x7b-32768",
-]
-
-HF_MODELS = [
-    "Qwen/Qwen2.5-7B-Instruct",
-    "meta-llama/Llama-3.2-3B-Instruct",
-    "microsoft/Phi-3.5-mini-instruct",
-    "mistralai/Mistral-Nemo-Instruct-2407",
-    "google/gemma-2-9b-it",
 ]
 
 LOCATIONS = [
@@ -415,12 +394,10 @@ _HF_TOKEN = os.environ.get("HF_TOKEN", "")
 if _GROQ_KEY:
     _BACKEND = "groq"
     _API_KEY = _GROQ_KEY
-    MODELS = GROQ_MODELS
     _MODEL_INFO = "Free via Groq — no user limits"
 else:
     _BACKEND = "huggingface"
     _API_KEY = _HF_TOKEN
-    MODELS = GROQ_MODELS  # always show Groq models; key must be set in Space Secrets
     _MODEL_INFO = "Set GROQ_API_KEY in Space Secrets to enable inference"
 
 with gr.Blocks(
@@ -430,7 +407,6 @@ with gr.Blocks(
     # ---- Session state ----
     profile_state = gr.State(None)
     profile_text_state = gr.State("")
-    jobs_state = gr.State([])
     scored_state = gr.State([])
     approved_state = gr.State([])
     current_idx_state = gr.State(-1)
@@ -441,7 +417,7 @@ with gr.Blocks(
 
     Searches **Euraxess**, **mlscientist.com**, **jobs.ac.uk** (UK only), and the web via **DuckDuckGo**.
     Scores each position against your CV, generates tailored cover letter drafts, and exports everything as a ZIP.
-    Powered by free HuggingFace Inference API models — no subscription required.
+    Powered by **Groq** free API — no subscription required.
     """)
 
     with gr.Tabs() as tabs:
@@ -495,16 +471,11 @@ with gr.Blocks(
                     gr.Markdown("### Your CV Profile")
                     profile_display = gr.Markdown("*Run a search first.*")
                 with gr.Column(scale=2):
-                    gr.Markdown("### Positions Found")
-                    jobs_df = gr.Dataframe(
-                        headers=["#", "Title", "Institution", "Location", "Type", "Source", "Deadline"],
+                    gr.Markdown("### Scored Positions")
+                    scored_df = gr.Dataframe(
+                        headers=["#", "Score", "Title", "Institution", "Type", "Rec.", "Why good fit"],
                         interactive=False, wrap=True,
                     )
-            gr.Markdown("### Recommended Positions (above minimum score) — all positions are reviewable in the next tab")
-            scored_df = gr.Dataframe(
-                headers=["#", "Score", "Title", "Institution", "Type", "Rec.", "Why good fit"],
-                interactive=False, wrap=True,
-            )
             go_review_btn = gr.Button("Go to Review →", variant="secondary")
 
         # ── Tab 3: Review ─────────────────────────────────────────────────
@@ -539,16 +510,14 @@ with gr.Blocks(
             with gr.Row():
                 approve_btn = gr.Button("✅ Approve & Save", variant="primary")
                 regen_btn = gr.Button("🔄 Regenerate Letter", variant="secondary")
-                skip_btn = gr.Button("⏭ Skip", variant="stop")
+                download_letter_btn = gr.DownloadButton("⬇ Download .txt", variant="secondary")
             approve_status = gr.Markdown("")
 
         # ── Tab 4: Export ─────────────────────────────────────────────────
         with gr.Tab("Export", id=3):
             gr.Markdown("### Your approved applications")
             approved_md = gr.Markdown("*No applications approved yet.*")
-            with gr.Row():
-                refresh_btn = gr.Button("Refresh list")
-                export_btn = gr.Button("Download as ZIP", variant="primary")
+            export_btn = gr.Button("Download as ZIP", variant="primary")
             download_file = gr.File(label="Download", visible=False)
             export_status = gr.Markdown("")
 
@@ -557,8 +526,8 @@ with gr.Blocks(
     search_btn.click(
         fn=run_search,
         inputs=[cv_file, field_input, location_input, pos_type, min_score, model_dropdown],
-        outputs=[profile_display, jobs_df, scored_df, search_status,
-                 profile_state, profile_text_state, jobs_state, scored_state, position_selector],
+        outputs=[profile_display, scored_df, search_status,
+                 profile_state, profile_text_state, scored_state, position_selector],
     )
 
     go_review_btn.click(fn=lambda: gr.update(selected=2), outputs=tabs)
@@ -576,20 +545,18 @@ with gr.Blocks(
         outputs=[cover_letter_box],
     )
 
+    download_letter_btn.click(
+        fn=letter_to_file,
+        inputs=[cover_letter_box],
+        outputs=[download_letter_btn],
+    )
+
     approve_btn.click(
         fn=approve_position,
         inputs=[current_idx_state, cover_letter_box, notes_box, scored_state, approved_state],
         outputs=[approved_state, approve_status],
-    )
-
-    skip_btn.click(
-        fn=skip_position,
-        inputs=[current_idx_state, scored_state],
-        outputs=[approve_status],
-    )
-
-    refresh_btn.click(
-        fn=approved_display,
+    ).then(
+        fn=_fmt_approved,
         inputs=[approved_state],
         outputs=[approved_md],
     )

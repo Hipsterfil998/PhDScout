@@ -1,11 +1,11 @@
-"""Job matcher: scores research/PhD positions against a CV profile."""
+"""Job matcher — scores research positions against a CV profile."""
 
 from __future__ import annotations
 
 from typing import Any, TypedDict
 
-from agent.llm_client import LLMClient, LLMQuotaError
-from agent.utils import parse_json, job_institution, job_description
+from agent.base_service import BaseLLMService
+from agent.utils import job_description, job_institution
 
 
 class MatchResult(TypedDict, total=False):
@@ -67,28 +67,23 @@ Important instructions:
   publication track record, technical skills, career stage fit."""
 
 
-def _fallback(raw: str) -> MatchResult:
+def _fallback(reason: str) -> MatchResult:
     return {
         "match_score": 0,
         "recommendation": "skip",
         "matching_areas": [],
         "missing_requirements": [],
         "why_good_fit": "",
-        "concerns": f"Could not parse match result. Raw: {raw[:200]}",
+        "concerns": f"Could not score position: {reason[:200]}",
     }
 
 
-class JobMatcher:
+class JobMatcher(BaseLLMService):
     """Scores job listings against a CV profile using an LLM."""
 
-    def __init__(self, llm: LLMClient) -> None:
-        self.llm = llm
+    _SYSTEM = _SYSTEM
 
-    def score(
-        self,
-        job: dict[str, Any],
-        profile_text: str,
-    ) -> MatchResult:
+    def score(self, job: dict[str, Any], profile_text: str) -> MatchResult:
         """Score a single job listing against a CV profile summary."""
         prompt = _PROMPT.format(
             profile=profile_text,
@@ -99,16 +94,10 @@ class JobMatcher:
             description=job_description(job),
         )
 
-        try:
-            raw = self.llm.generate(system=_SYSTEM, user=prompt, json_mode=True)
-        except LLMQuotaError:
-            raise  # propagate — caller should surface this to the user
-        except RuntimeError as exc:
-            return _fallback(str(exc))
+        result = self._generate_json(prompt)
+        if result is None:
+            return _fallback("LLM call or JSON parse failed")
 
-        result: MatchResult = parse_json(raw) or _fallback(raw)
-
-        # Clamp and normalise
         try:
             result["match_score"] = max(0, min(100, int(result.get("match_score", 0))))
         except (TypeError, ValueError):
@@ -116,7 +105,9 @@ class JobMatcher:
 
         if result.get("recommendation") not in ("apply", "consider", "skip"):
             score = result.get("match_score", 0)
-            result["recommendation"] = "apply" if score >= 70 else ("consider" if score >= 50 else "skip")
+            result["recommendation"] = (
+                "apply" if score >= 70 else ("consider" if score >= 50 else "skip")
+            )
 
         return result
 
@@ -126,10 +117,6 @@ class JobMatcher:
         profile_text: str,
     ) -> list[dict[str, Any]]:
         """Score all jobs and return them sorted by score (highest first)."""
-        scored = []
-        for job in jobs:
-            match = self.score(job, profile_text)
-            scored.append({**job, "match": match})
-
+        scored = [{**job, "match": self.score(job, profile_text)} for job in jobs]
         scored.sort(key=lambda j: j["match"].get("match_score", 0), reverse=True)
         return scored
