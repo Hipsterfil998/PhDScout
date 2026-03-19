@@ -446,8 +446,8 @@ with gr.Blocks(
                     with gr.Row():
                         pos_type = gr.Dropdown(
                             label="Position type",
-                            choices=["any", "predoctoral", "phd", "postdoc", "fellowship", "research_staff"],
-                            value="any",
+                            choices=["predoctoral", "phd", "postdoc", "fellowship", "research_staff"],
+                            value="phd",
                         )
                         min_score = gr.Slider(
                             label="Minimum match score",
