@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, TypedDict
 
 from agent.base_service import BaseLLMService
+from agent.prompts import JOB_MATCHER_SYSTEM, JOB_MATCHER_PROMPT
 from agent.utils import job_description, job_institution
 
 
@@ -17,54 +18,6 @@ class MatchResult(TypedDict, total=False):
     concerns: str
 
 
-_SYSTEM = (
-    "You are an expert academic recruiter specialising in PhD and postdoc placements. "
-    "Evaluate how well a candidate's research profile fits a given position. "
-    "Respond only with valid JSON — no markdown, no commentary."
-)
-
-_PROMPT = """Evaluate how well this candidate fits the research position below.
-
-CANDIDATE PROFILE:
-{profile}
-
-POSITION:
-Title: {title}
-Institution: {institution}
-Location: {location}
-Type: {pos_type}
-Description:
-{description}
-
-Return a JSON object with exactly these keys:
-{{
-  "match_score": <integer 0-100>,
-  "recommendation": "apply" | "consider" | "skip",
-  "matching_areas": ["research areas / skills that align"],
-  "missing_requirements": ["gaps between candidate and requirements"],
-  "why_good_fit": "2-3 sentence explanation of main strengths",
-  "concerns": "1-2 sentence summary of gaps (empty string if none)"
-}}
-
-Scoring guide:
-  85-100: Excellent match — research interests closely aligned, strong publication record in the area
-  70-84:  Good match — clear research overlap, most skills present
-  55-69:  Partial match — meaningful overlap even if not all keywords match exactly
-  35-54:  Weak match — limited overlap, significant gaps
-  0-34:   Poor match — very different research areas
-
-Important instructions:
-- The job description may be a short excerpt. When it is vague or brief, rely primarily
-  on the TITLE and INSTITUTION to infer the research area — do NOT penalise short descriptions.
-- Reason SEMANTICALLY, not by keyword matching. "Deep learning" and "neural networks",
-  "NLP" and "natural language processing", "ML" and "machine learning" are equivalent.
-- Adjacent and complementary fields count as partial overlap (score ≥ 55).
-- Highlight ALL matching areas found in the candidate profile, including transferable
-  methodological skills, domain knowledge, tools, and publications.
-- Be generous when evidence is ambiguous — a candidate who publishes in area X is
-  likely qualified for positions requiring closely related area Y.
-- Consider: research interest alignment, thesis relevance, methodological overlap,
-  publication track record, technical skills, career stage fit."""
 
 
 def _fallback(reason: str) -> MatchResult:
@@ -81,11 +34,11 @@ def _fallback(reason: str) -> MatchResult:
 class JobMatcher(BaseLLMService):
     """Scores job listings against a CV profile using an LLM."""
 
-    _SYSTEM = _SYSTEM
+    _SYSTEM = JOB_MATCHER_SYSTEM
 
     def score(self, job: dict[str, Any], profile_text: str) -> MatchResult:
         """Score a single job listing against a CV profile summary."""
-        prompt = _PROMPT.format(
+        prompt = JOB_MATCHER_PROMPT.format(
             profile=profile_text,
             title=job.get("title", "Unknown"),
             institution=job_institution(job) or "Unknown",

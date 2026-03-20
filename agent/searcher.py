@@ -15,8 +15,9 @@ from agent.scrapers import (
 from agent.scrapers.base import BaseScraper, _DELAY
 
 
-_RECENT_DAYS = 30        # posted within N days → "Recent"
-_DEADLINE_WARN_DAYS = 14  # deadline within N days → "Closing soon"
+from config import config as _cfg
+_RECENT_DAYS = _cfg.recent_days
+_DEADLINE_WARN_DAYS = _cfg.deadline_warn_days
 
 
 class JobListing(TypedDict, total=False):

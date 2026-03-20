@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any, TypedDict
 
 from agent.base_service import BaseLLMService
+from agent.prompts import CV_TAILOR_SYSTEM, CV_TAILOR_PROMPT
 from agent.utils import job_description, job_institution
 
 
@@ -17,36 +18,6 @@ class TailoringHints(TypedDict, total=False):
     suggested_order: list[str]
 
 
-_SYSTEM = (
-    "You are an expert academic career advisor helping a researcher tailor their CV "
-    "for a specific PhD / postdoc / fellowship application. "
-    "Give concrete, actionable hints — do NOT rewrite the CV. "
-    "Respond only with valid JSON."
-)
-
-_PROMPT = """The researcher is applying for the following position:
-
-POSITION:
-Title: {title}
-Institution: {institution}
-Type: {pos_type}
-Description:
-{description}
-
-CANDIDATE CV PROFILE:
-{profile}
-
-Produce a JSON object with EXACTLY these keys:
-{{
-  "headline_suggestion": "One sentence suggestion for tweaking the profile summary",
-  "skills_to_highlight": ["skill (why relevant)"],
-  "experience_to_emphasize": ["Experience entry — which aspect to highlight"],
-  "research_alignment": "2-3 sentences on how to frame research interests for this group",
-  "keywords_to_add": ["keyword from JD not in CV"],
-  "suggested_order": ["Research Interests", "Publications", "Education", "Experience", "Skills"]
-}}
-
-Rules: be specific, reference actual CV entries, do NOT suggest fabricating anything."""
 
 _FALLBACK_ORDER = ["Education", "Research Interests", "Publications", "Experience", "Skills", "Awards"]
 
@@ -85,11 +56,11 @@ def format_hints_text(hints: TailoringHints) -> str:
 class CVTailor(BaseLLMService):
     """Generates per-position CV tailoring hints using an LLM."""
 
-    _SYSTEM = _SYSTEM
+    _SYSTEM = CV_TAILOR_SYSTEM
 
     def generate(self, job: dict[str, Any], profile_text: str) -> TailoringHints:
         """Generate actionable tailoring hints for a specific position."""
-        prompt = _PROMPT.format(
+        prompt = CV_TAILOR_PROMPT.format(
             title=job.get("title", "Unknown"),
             institution=job_institution(job) or "Unknown",
             pos_type=job.get("type", "unknown"),

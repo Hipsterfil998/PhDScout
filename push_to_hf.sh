@@ -17,9 +17,11 @@ license: mit
 
 '
 
-# 1. Prepend frontmatter to README
-printf '%s' "$HF_FRONTMATTER" | cat - README.md > README.hf.tmp
-mv README.hf.tmp README.md
+# 1. Prepend frontmatter to README (skip if already present)
+if ! head -1 README.md | grep -q "^---"; then
+    printf '%s' "$HF_FRONTMATTER" | cat - README.md > README.hf.tmp
+    mv README.hf.tmp README.md
+fi
 
 # 2. Create a temporary commit
 git add README.md

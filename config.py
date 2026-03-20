@@ -53,6 +53,18 @@ class AppConfig:
 
     # Generation settings
     max_tokens: int = 4096
+    default_model: str = "llama-3.1-8b-instant"   # only model exposed in the UI
+
+    # Scraper behaviour
+    scraper_delay: float = 1.5     # polite delay between HTTP requests (seconds)
+    max_results_per_source: int = 20  # max listings fetched from each job board
+
+    # Freshness thresholds (used to label and filter results)
+    recent_days: int = 30          # posted within N days → "Recent"
+    deadline_warn_days: int = 14   # deadline within N days → "Closing soon"
+
+    # UI defaults
+    min_score_default: int = 60    # default minimum match score slider value
 
     # Output directory for saved applications
     output_dir: str = field(default_factory=lambda: os.getenv("OUTPUT_DIR", "./output"))

@@ -22,6 +22,7 @@ import gradio as gr
 
 from agent import JobAgent
 from agent.utils import job_institution
+from config import config
 
 
 # ---------------------------------------------------------------------------
@@ -168,7 +169,6 @@ def run_search(
     location: str,
     pos_type: str,
     min_score: int,
-    model_name: str,
     progress=gr.Progress(track_tqdm=True),
 ) -> tuple:
     """Parse CV, search job boards, score positions. Returns 7 outputs."""
@@ -187,7 +187,7 @@ def run_search(
         return _err("No API key configured. Set GROQ_API_KEY as a Space secret.")
 
     try:
-        agent = JobAgent(model=model_name, backend=_BACKEND, api_key=_API_KEY)
+        agent = JobAgent(model=_MODEL, backend=_BACKEND, api_key=_API_KEY)
         cv_path = cv_file if isinstance(cv_file, str) else cv_file.name
 
         progress(0, desc="Parsing CV...")
@@ -235,7 +235,6 @@ def load_position(
     choice: str,
     scored_jobs: list,
     profile_text: str,
-    model_name: str,
     progress=gr.Progress(),
 ) -> tuple:
     """Generate tailoring hints and cover letter for a selected position. Returns 5 outputs."""
@@ -250,7 +249,7 @@ def load_position(
         job = scored_jobs[idx]
         match: dict = job.get("match") or {}
 
-        agent = JobAgent(model=model_name, backend=_BACKEND, api_key=_API_KEY)
+        agent = JobAgent(model=_MODEL, backend=_BACKEND, api_key=_API_KEY)
 
         progress(0.3, desc="Generating tailoring hints...")
         hints, cover_letter = agent.prepare_application(job, profile_text)
@@ -267,13 +266,12 @@ def regenerate_letter(
     current_idx: int,
     scored_jobs: list,
     profile_text: str,
-    model_name: str,
     progress=gr.Progress(),
 ) -> str:
     if current_idx < 0 or not scored_jobs or current_idx >= len(scored_jobs):
         return "*No position loaded.*"
     try:
-        agent = JobAgent(model=model_name, backend=_BACKEND, api_key=_API_KEY)
+        agent = JobAgent(model=_MODEL, backend=_BACKEND, api_key=_API_KEY)
         progress(0.3, desc="Regenerating cover letter...")
         result = agent.regenerate_letter(scored_jobs[current_idx], profile_text)
         progress(1.0)
@@ -360,10 +358,7 @@ def letter_to_file(text: str) -> str | None:
 # Gradio Blocks layout
 # ---------------------------------------------------------------------------
 
-MODELS = [
-    "llama-3.3-70b-versatile",
-    "llama-3.1-8b-instant",
-]
+_MODEL = config.default_model
 
 LOCATIONS = [
     "Worldwide",
@@ -393,11 +388,9 @@ _HF_TOKEN = os.environ.get("HF_TOKEN", "")
 if _GROQ_KEY:
     _BACKEND = "groq"
     _API_KEY = _GROQ_KEY
-    _MODEL_INFO = "Free via Groq — no user limits"
 else:
     _BACKEND = "huggingface"
     _API_KEY = _HF_TOKEN
-    _MODEL_INFO = "Set GROQ_API_KEY in Space Secrets to enable inference"
 
 with gr.Blocks(
     theme=gr.themes.Soft(primary_hue="blue", secondary_hue="purple"),
@@ -452,14 +445,6 @@ with gr.Blocks(
                             label="Minimum match score",
                             minimum=30, maximum=90, value=60, step=5,
                         )
-                with gr.Column(scale=1):
-                    gr.Markdown("### LLM Settings")
-                    model_dropdown = gr.Dropdown(
-                        label="Model",
-                        choices=MODELS,
-                        value=MODELS[0],
-                        info=_MODEL_INFO,
-                    )
             search_btn = gr.Button("Parse CV & Search Positions", variant="primary", size="lg")
             search_status = gr.Markdown("*Ready. Fill in the form and click Search.*")
 
@@ -524,7 +509,7 @@ with gr.Blocks(
 
     search_btn.click(
         fn=run_search,
-        inputs=[cv_file, field_input, location_input, pos_type, min_score, model_dropdown],
+        inputs=[cv_file, field_input, location_input, pos_type, min_score],
         outputs=[profile_display, scored_df, search_status,
                  profile_state, profile_text_state, scored_state, position_selector],
     )
@@ -533,14 +518,14 @@ with gr.Blocks(
 
     load_btn.click(
         fn=load_position,
-        inputs=[position_selector, scored_state, profile_text_state, model_dropdown],
+        inputs=[position_selector, scored_state, profile_text_state],
         outputs=[position_details_display, hints_display, cover_letter_box,
                  review_status, current_idx_state],
     )
 
     regen_btn.click(
         fn=regenerate_letter,
-        inputs=[current_idx_state, scored_state, profile_text_state, model_dropdown],
+        inputs=[current_idx_state, scored_state, profile_text_state],
         outputs=[cover_letter_box],
     )
 

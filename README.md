@@ -1,39 +1,3 @@
----
-title: PhdScout
-emoji: 🎓
-colorFrom: blue
-colorTo: purple
-sdk: gradio
-sdk_version: "5.25.0"
-app_file: app.py
-pinned: false
-license: mit
----
-
----
-title: PhdScout
-emoji: 🎓
-colorFrom: blue
-colorTo: purple
-sdk: gradio
-sdk_version: "5.25.0"
-app_file: app.py
-pinned: false
-license: mit
----
-
----
-title: PhdScout
-emoji: 🎓
-colorFrom: blue
-colorTo: purple
-sdk: gradio
-sdk_version: "5.25.0"
-app_file: app.py
-pinned: false
-license: mit
----
-
 <h1 align="center">PhdScout 🎓</h1>
 
 <p align="center">
@@ -42,7 +6,7 @@ license: mit
 
 <p align="center">
   🆓 <strong>100% free</strong> — no subscriptions, no API costs, no sign-up required.<br>
-  Live demo on HuggingFace Spaces: <a href="https://huggingface.co/spaces/HipFil98/PhDScout">HipFil98/PhDScout</a><br>
+  Live demo on HuggingFace Spaces: <a href="https://huggingface.co/spaces/HipFil98/research-job-agent">HipFil98/research-job-agent</a><br>
   📖 <a href="https://hipsterfil998.github.io/PhDScout">Full documentation</a>
 </p>
 
@@ -117,11 +81,12 @@ The app will be available at `http://localhost:7860`.
 ```
 PhDScout/
 ├── app.py                  # Gradio web interface
-├── config.py               # Configuration (env vars, defaults)
+├── config.py               # Runtime settings (model, thresholds, delays)
 ├── requirements.txt
 └── agent/
     ├── __init__.py         # Public API: JobAgent, LLMQuotaError
     ├── pipeline.py         # JobAgent orchestrator
+    ├── prompts.py          # All LLM prompts (edit here to tune behaviour)
     ├── base_service.py     # BaseLLMService base class
     ├── cv_parser.py        # CV text extraction + LLM parsing
     ├── job_matcher.py      # LLM-based position scoring
@@ -134,20 +99,15 @@ PhDScout/
         ├── base.py         # BaseScraper ABC + shared helpers
         ├── euraxess.py     # EuraxessScraper
         ├── mlscientist.py  # MLScientistScraper
-        ├── jobs_ac_uk.py   # JobsAcUkScraper
-        └── web.py          # WebSearchScraper (available, not active by default)
+        └── jobs_ac_uk.py   # JobsAcUkScraper
 ```
 
 ---
 
-## Models
+## Model
 
 Powered by [Groq](https://groq.com) free API — fast inference, no subscription required.
-
-| Model | Notes |
-|-------|-------|
-| `llama-3.3-70b-versatile` | Default, best quality |
-| `llama-3.1-8b-instant` | Fastest |
+Uses `llama-3.1-8b-instant` by default. To change the model, edit `default_model` in `config.py`.
 
 For local use, the app also supports **Ollama** — set `LLM_BACKEND=ollama` in `.env`.
 
