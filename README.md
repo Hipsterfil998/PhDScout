@@ -6,7 +6,7 @@
 
 <p align="center">
   🆓 <strong>100% free</strong> — no subscriptions, no API costs, no sign-up required.<br>
-  Live demo on HuggingFace Spaces: <a href="https://huggingface.co/spaces/HipFil98/research-job-agent">HipFil98/research-job-agent</a><br>
+  Live demo on HuggingFace Spaces: <a href="https://huggingface.co/spaces/HipFil98/PhDScout">HipFil98/PhDScout</a><br>
   📖 <a href="https://hipsterfil998.github.io/PhDScout">Full documentation</a>
 </p>
 
