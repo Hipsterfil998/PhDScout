@@ -481,7 +481,7 @@
           <div class="step-num"></div>
           <div class="step-body">
             <strong>Score & rank</strong>
-            <p>Each position is scored 0–100 for fit. The LLM reasons semantically — "NLP" and "natural language processing" are treated as equivalent.</p>
+            <p>Each position is scored 0–100 for fit. The LLM reasons semantically — "NLP" and "natural language processing" are treated as equivalent. Postdoc and fellowship positions are automatically penalised when the candidate's CV shows no completed or in-progress PhD.</p>
           </div>
         </div>
         <div class="step">
@@ -717,6 +717,19 @@ scored = agent.score_jobs(jobs, profile_text)
       <li>Postings with a <strong>deadline already passed</strong></li>
       <li>Jobs with no date info are kept (benefit of the doubt)</li>
     </ul>
+
+    <h2>PhD eligibility gate</h2>
+    <p>Before scoring, PhdScout checks whether the candidate holds or is pursuing a PhD and enforces two caps on postdoc and fellowship positions:</p>
+    <table>
+      <tr><th>Candidate status</th><th>Postdoc / Fellowship score cap</th></tr>
+      <tr><td>No PhD detected in CV</td><td>≤ 30 — set to <em>skip</em></td></tr>
+      <tr><td>PhD in progress (candidate / student)</td><td>≤ 65</td></tr>
+      <tr><td>PhD completed</td><td>No cap</td></tr>
+    </table>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <p>This gate is enforced at two levels: in the LLM prompt (via <code>JOB_MATCHER_PROMPT</code>) and in code (<code>agent/matching/matcher.py</code>) as a safety net. PhD positions are always open to master's graduates — no cap applies.</p>
+    </div>
 
     <h2>Adding a source</h2>
     <p>Create a new file in <code>agent/search/scrapers/</code> that subclasses <code>BaseScraper</code>:</p>

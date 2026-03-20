@@ -1,15 +1,3 @@
----
-title: PhdScout
-emoji: 🎓
-colorFrom: blue
-colorTo: purple
-sdk: gradio
-sdk_version: "5.25.0"
-app_file: app.py
-pinned: false
-license: mit
----
-
 <h1 align="center">PhdScout 🎓</h1>
 
 <p align="center">
@@ -33,16 +21,6 @@ Upload your CV, set a research field and country, and PhdScout will:
 - **Rank** all results and highlight the best fits
 - **Generate** a personalized cover letter draft for every position
 - **Export** all approved applications as a ZIP (cover letters + position details)
-
----
-
-## Job sources
-
-| Source | Coverage |
-|--------|----------|
-| [Euraxess](https://euraxess.ec.europa.eu/jobs/search) | Europe and worldwide — official EU research portal |
-| [mlscientist.com](https://mlscientist.com) | ML / AI academic positions worldwide |
-| [jobs.ac.uk](https://www.jobs.ac.uk) | UK academic jobs (queried only when UK is selected) |
 
 ---
 
