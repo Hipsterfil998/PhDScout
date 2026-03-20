@@ -4,7 +4,7 @@ from pathlib import Path
 from unittest.mock import MagicMock
 import pytest
 
-from agent.cv_parser import CVParser
+from agent.cv.parser import CVParser
 from agent.llm_client import LLMClient
 
 

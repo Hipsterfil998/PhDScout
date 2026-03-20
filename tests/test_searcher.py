@@ -2,7 +2,7 @@
 
 from datetime import datetime, timedelta
 import pytest
-from agent.searcher import JobSearcher
+from agent.search.searcher import JobSearcher
 
 
 TODAY = datetime.now()

@@ -2,7 +2,7 @@
 
 from datetime import datetime
 import pytest
-from agent.scrapers.base import BaseScraper
+from agent.search.scrapers.base import BaseScraper
 
 
 class TestParseDate:

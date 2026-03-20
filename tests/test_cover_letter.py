@@ -2,7 +2,7 @@
 
 from unittest.mock import MagicMock
 import pytest
-from agent.cover_letter import CoverLetterWriter
+from agent.cv.cover_letter import CoverLetterWriter
 from agent.llm_client import LLMClient, LLMQuotaError
 from agent.prompts import COVER_LETTER_DRAFT_HEADER
 

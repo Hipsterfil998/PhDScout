@@ -7,12 +7,12 @@ import time
 from datetime import datetime
 from typing import TypedDict
 
-from agent.scrapers import (
+from agent.search.scrapers import (
     EuraxessScraper,
     JobsAcUkScraper,
     MLScientistScraper,
 )
-from agent.scrapers.base import BaseScraper, _DELAY
+from agent.search.scrapers.base import BaseScraper, _DELAY
 
 
 from config import config as _cfg
@@ -168,7 +168,7 @@ class JobSearcher:
         Jobs with a known posting date are ranked first, most recent first.
         Within the same date (or when no date is available), longer descriptions rank higher.
         """
-        from agent.scrapers.base import BaseScraper
+        from agent.search.scrapers.base import BaseScraper
         posted = BaseScraper._parse_date(job.get("posted"))
         has_date = posted is not None
         dt = posted or datetime.min

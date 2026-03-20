@@ -1,8 +1,8 @@
 """Tests for JobMatcher — mocks LLM to test scoring logic without API calls."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import pytest
-from agent.job_matcher import JobMatcher, _fallback
+from agent.matching.matcher import JobMatcher, _fallback, _phd_status
 from agent.llm_client import LLMClient, LLMQuotaError
 
 
@@ -108,6 +108,113 @@ class TestScoreAll:
         scored = matcher.score_all(jobs, PROFILE)
         scores = [j["match"]["match_score"] for j in scored]
         assert scores == sorted(scores, reverse=True)
+
+
+class TestPhDStatus:
+    def test_completed_phd(self):
+        assert _phd_status("Researcher with a PhD in Computer Science.") == "completed"
+
+    def test_completed_phd_variant(self):
+        assert _phd_status("She holds a Ph.D. from MIT.") == "completed"
+
+    def test_completed_doctorate(self):
+        assert _phd_status("Awarded doctoral degree in 2020.") == "completed"
+
+    def test_in_progress_candidate(self):
+        assert _phd_status("Currently a PhD candidate at ETH Zurich.") == "in_progress"
+
+    def test_in_progress_student(self):
+        assert _phd_status("PhD student in NLP, expected 2026.") == "in_progress"
+
+    def test_in_progress_pursuing(self):
+        assert _phd_status("Pursuing a doctorate at Cambridge.") == "in_progress"
+
+    def test_in_progress_beats_completed(self):
+        # "PhD candidate" should not be downgraded just because "PhD" also appears
+        assert _phd_status("PhD candidate (Ph.D. expected 2027)") == "in_progress"
+
+    def test_none(self):
+        assert _phd_status("Master's student in ML, 3 years experience.") == "none"
+
+    def test_empty_string(self):
+        assert _phd_status("") == "none"
+
+
+POSTDOC_JOB = {"title": "Postdoc in ML", "institution": "MIT", "location": "USA",
+               "type": "postdoc", "description": "Postdoctoral research position."}
+FELLOWSHIP_JOB = {**POSTDOC_JOB, "type": "fellowship"}
+
+
+class TestEligibilityCap:
+    def test_no_phd_postdoc_capped_at_30(self):
+        # LLM gives 80 but candidate has no PhD — must be capped at 30
+        matcher = _make_matcher(
+            '{"match_score": 80, "recommendation": "apply", '
+            '"matching_areas": ["ML"], "missing_requirements": [], '
+            '"why_good_fit": "Great.", "concerns": ""}'
+        )
+        no_phd_profile = "Master student in ML with 2 years experience."
+        result = matcher.score(POSTDOC_JOB, no_phd_profile)
+        assert result["match_score"] == 30
+        assert result["recommendation"] == "skip"
+        assert "PhD" in result["concerns"] or "doctoral" in result["concerns"].lower()
+
+    def test_no_phd_fellowship_capped_at_30(self):
+        matcher = _make_matcher(
+            '{"match_score": 75, "recommendation": "apply", '
+            '"matching_areas": [], "missing_requirements": [], '
+            '"why_good_fit": "", "concerns": ""}'
+        )
+        result = matcher.score(FELLOWSHIP_JOB, "Master's graduate, ML researcher.")
+        assert result["match_score"] == 30
+
+    def test_no_phd_already_low_score_unchanged(self):
+        # Score ≤ 30 already — cap must NOT raise it
+        matcher = _make_matcher(
+            '{"match_score": 20, "recommendation": "skip", '
+            '"matching_areas": [], "missing_requirements": [], '
+            '"why_good_fit": "", "concerns": "Poor fit."}'
+        )
+        result = matcher.score(POSTDOC_JOB, "No PhD here.")
+        assert result["match_score"] == 20  # unchanged
+
+    def test_phd_in_progress_postdoc_capped_at_65(self):
+        matcher = _make_matcher(
+            '{"match_score": 85, "recommendation": "apply", '
+            '"matching_areas": ["ML"], "missing_requirements": [], '
+            '"why_good_fit": "Strong.", "concerns": ""}'
+        )
+        result = matcher.score(POSTDOC_JOB, "PhD candidate at Stanford, expected 2026.")
+        assert result["match_score"] == 65
+
+    def test_phd_in_progress_below_65_unchanged(self):
+        matcher = _make_matcher(
+            '{"match_score": 55, "recommendation": "consider", '
+            '"matching_areas": [], "missing_requirements": [], '
+            '"why_good_fit": "", "concerns": ""}'
+        )
+        result = matcher.score(POSTDOC_JOB, "Pursuing a PhD in NLP.")
+        assert result["match_score"] == 55  # not capped
+
+    def test_completed_phd_postdoc_no_cap(self):
+        matcher = _make_matcher(
+            '{"match_score": 90, "recommendation": "apply", '
+            '"matching_areas": ["ML"], "missing_requirements": [], '
+            '"why_good_fit": "Excellent.", "concerns": ""}'
+        )
+        result = matcher.score(POSTDOC_JOB, "Researcher with a PhD in Computer Science.")
+        assert result["match_score"] == 90
+
+    def test_phd_position_no_cap_regardless(self):
+        # PhD positions should not cap regardless of candidate's PhD status
+        matcher = _make_matcher(
+            '{"match_score": 85, "recommendation": "apply", '
+            '"matching_areas": ["ML"], "missing_requirements": [], '
+            '"why_good_fit": "Good.", "concerns": ""}'
+        )
+        phd_job = {**JOB, "type": "phd"}
+        result = matcher.score(phd_job, "Master student with strong ML background.")
+        assert result["match_score"] == 85
 
 
 class TestFallback:

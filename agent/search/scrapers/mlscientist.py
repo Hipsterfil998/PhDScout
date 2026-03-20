@@ -6,7 +6,7 @@ import re
 from typing import ClassVar
 from urllib.parse import quote_plus
 
-from agent.scrapers.base import BaseScraper
+from agent.search.scrapers.base import BaseScraper
 
 
 class MLScientistScraper(BaseScraper):

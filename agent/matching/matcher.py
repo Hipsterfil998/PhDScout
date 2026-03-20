@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any, TypedDict
 
 from agent.base_service import BaseLLMService
@@ -18,6 +19,30 @@ class MatchResult(TypedDict, total=False):
     concerns: str
 
 
+
+
+_PHD_COMPLETED = re.compile(
+    r"\b(ph\.?d\.?|doctorate|doctoral degree)\b", re.IGNORECASE
+)
+_PHD_IN_PROGRESS = re.compile(
+    r"\b(phd (candidate|student|fellow)|doctoral (candidate|student)|"
+    r"phd (in progress|expected|ongoing)|pursuing (a |the )?(ph\.?d|doctorate))\b",
+    re.IGNORECASE,
+)
+
+
+def _phd_status(profile_text: str) -> str:
+    """Return 'completed', 'in_progress', or 'none' based on the profile summary.
+
+    Heuristic: looks for PhD/doctorate keywords in the text the LLM produced
+    from the candidate's CV.  False negatives (PhD not detected) are possible
+    for very terse profiles — the LLM prompt rule acts as the primary gate.
+    """
+    if _PHD_IN_PROGRESS.search(profile_text):
+        return "in_progress"
+    if _PHD_COMPLETED.search(profile_text):
+        return "completed"
+    return "none"
 
 
 def _fallback(reason: str) -> MatchResult:
@@ -57,6 +82,22 @@ class JobMatcher(BaseLLMService):
             result["match_score"] = max(0, min(100, int(result.get("match_score", 0))))
         except (TypeError, ValueError):
             result["match_score"] = 0
+
+        # Hard eligibility cap — safety net in case the LLM ignores the prompt rule.
+        pos_type = job.get("type", "")
+        if pos_type in ("postdoc", "fellowship"):
+            phd_status = _phd_status(profile_text)
+            if phd_status == "none" and result["match_score"] > 30:
+                result["match_score"] = 30
+                result["recommendation"] = "skip"
+                existing = result.get("concerns") or ""
+                result["concerns"] = (
+                    "Eligibility: no completed or in-progress PhD found in the candidate "
+                    "profile. Postdoc/fellowship positions require a doctoral degree. "
+                    + existing
+                ).strip()
+            elif phd_status == "in_progress" and result["match_score"] > 65:
+                result["match_score"] = 65  # PhD in progress: eligible but capped
 
         if result.get("recommendation") not in ("apply", "consider", "skip"):
             score = result.get("match_score", 0)

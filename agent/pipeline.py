@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import Any
 
 from agent.llm_client import LLMClient
-from agent.cv_parser import CVParser, CVProfile
-from agent.searcher import JobSearcher
-from agent.job_matcher import JobMatcher
-from agent.cv_tailor import CVTailor, TailoringHints
-from agent.cover_letter import CoverLetterWriter
+from agent.cv.parser import CVParser, CVProfile
+from agent.search.searcher import JobSearcher
+from agent.matching.matcher import JobMatcher
+from agent.cv.tailor import CVTailor, TailoringHints
+from agent.cv.cover_letter import CoverLetterWriter
 
 
 class JobAgent:

@@ -212,7 +212,7 @@ def _save_application(
 
     Returns the path to the created directory.
     """
-    from agent.cv_tailor import format_hints_text  # noqa: PLC0415
+    from agent.cv.tailor import format_hints_text  # noqa: PLC0415
 
     institution = _safe_dirname(job.get("institution", job.get("company", "Unknown")))
     title = _safe_dirname(job.get("title", "Position"))
@@ -351,9 +351,9 @@ def main(
     console.rule("[bold cyan]Step 2: Parsing CV[/bold cyan]")
 
     from agent.llm_client import LLMClient
-    from agent.cv_parser import CVParser
-    from agent.searcher import JobSearcher
-    from agent.job_matcher import JobMatcher
+    from agent.cv.parser import CVParser
+    from agent.search.searcher import JobSearcher
+    from agent.matching.matcher import JobMatcher
 
     llm = LLMClient(model=model)
     parser = CVParser(llm)
@@ -438,8 +438,8 @@ def main(
     # -------------------------------------------------------------------------
     console.rule("[bold cyan]Step 5: Review & Save Applications[/bold cyan]")
 
-    from agent.cover_letter import CoverLetterWriter
-    from agent.cv_tailor import CVTailor
+    from agent.cv.cover_letter import CoverLetterWriter
+    from agent.cv.tailor import CVTailor
     from agent.interactive_review import ReviewSession
 
     tailor = CVTailor(llm)

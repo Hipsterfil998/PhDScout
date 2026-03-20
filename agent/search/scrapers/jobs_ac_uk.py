@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from urllib.parse import quote_plus
 
-from agent.scrapers.base import BaseScraper
+from agent.search.scrapers.base import BaseScraper
 
 
 class JobsAcUkScraper(BaseScraper):
