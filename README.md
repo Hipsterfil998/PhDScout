@@ -110,6 +110,33 @@ For local use, the app also supports **Ollama** — set `LLM_BACKEND=ollama` in 
 
 ---
 
+## Credits
+
+Job data sourced from:
+- [Euraxess](https://euraxess.ec.europa.eu) — European Commission portal for research careers
+- [mlscientist.com](https://mlscientist.com) — ML & AI academic job board
+- [jobs.ac.uk](https://www.jobs.ac.uk) — UK academic jobs portal
+
+LLM inference powered by [Groq](https://groq.com) free API.
+
+---
+
+## Cite this work
+
+If you use PhdScout in your research or project, please cite it as:
+
+```bibtex
+@software{pellegrino2026phdscout,
+  author  = {Pellegrino, Filippo},
+  title   = {{PhdScout}: an AI-powered search agent for academic positions},
+  year    = {2026},
+  url     = {https://github.com/Hipsterfil998/PhDScout},
+  license = {MIT}
+}
+```
+
+---
+
 ## License
 
 MIT
