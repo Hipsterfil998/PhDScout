@@ -1,3 +1,16 @@
+---
+title: PhDScout
+emoji: 🎓
+colorFrom: blue
+colorTo: indigo
+sdk: gradio
+sdk_version: "5.23.3"
+app_file: app.py
+pinned: false
+license: mit
+short_description: AI-powered search agent for PhD and academic positions
+---
+
 <h1 align="center">PhdScout 🎓</h1>
 
 <p align="center">
