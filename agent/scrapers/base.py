@@ -37,14 +37,15 @@ _TYPE_KEYWORDS: dict[str, list[str]] = {
         "junior researcher", "research trainee", "research internship",
         "early-stage researcher", "early stage researcher", "esr",
     ],
+    # postdoc must be checked before phd: "postdoctoral" contains "doctoral"
+    "postdoc": [
+        "postdoc", "post-doc", "post doc", "postdoctoral",
+        "research associate", "research fellow",
+    ],
     "phd": [
         "phd", "ph.d", "doctoral", "doctorate",
         "phd student", "phd candidate", "phd position",
         "phd fellowship", "graduate student", "studentship",
-    ],
-    "postdoc": [
-        "postdoc", "post-doc", "post doc", "postdoctoral",
-        "research associate", "research fellow",
     ],
     "fellowship": [
         "fellowship", "stipend", "marie curie", "marie skłodowska",
