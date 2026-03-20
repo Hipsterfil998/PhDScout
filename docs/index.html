@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PhdScout — Documentation</title>
+<style>
+  :root {
+    --bg: #f5f5f7;
+    --surface: #ffffff;
+    --sidebar-bg: rgba(255,255,255,0.72);
+    --border: rgba(0,0,0,0.08);
+    --text: #1d1d1f;
+    --text-secondary: #6e6e73;
+    --accent: #0071e3;
+    --accent-hover: #0077ed;
+    --code-bg: #1c1c1e;
+    --code-text: #e8e8ed;
+    --tag-bg: #e8f0fe;
+    --tag-text: #1a73e8;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 2px 20px rgba(0,0,0,0.08);
+    --shadow-lg: 0 8px 40px rgba(0,0,0,0.12);
+    --sidebar-w: 240px;
+    --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SF Mono", "Fira Code", "Cascadia Code", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    font-size: 15px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Sidebar ────────────────────────────────────────── */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: var(--sidebar-w);
+    background: var(--sidebar-bg);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 24px 0 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .sidebar-logo {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 12px;
+  }
+
+  .sidebar-logo h1 {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .sidebar-logo span {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: block;
+    margin-top: 2px;
+  }
+
+  .nav-section {
+    padding: 6px 12px 2px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-top: 10px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 20px;
+    font-size: 14px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 0;
+    transition: color 0.15s, background 0.15s;
+    cursor: pointer;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+  }
+
+  .nav-link:hover { background: rgba(0,0,0,0.04); color: var(--text); }
+  .nav-link.active { color: var(--accent); font-weight: 500; background: rgba(0,113,227,0.07); }
+  .nav-link .icon { font-size: 15px; width: 18px; text-align: center; }
+
+  /* ── Main content ────────────────────────────────────── */
+  .main {
+    margin-left: var(--sidebar-w);
+    min-height: 100vh;
+    padding: 48px 64px;
+    max-width: calc(var(--sidebar-w) + 820px);
+  }
+
+  /* ── Sections ────────────────────────────────────────── */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── Typography ──────────────────────────────────────── */
+  h1 {
+    font-size: 36px;
+    font-weight: 700;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  h2 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    margin: 40px 0 14px;
+    color: var(--text);
+    padding-top: 8px;
+  }
+
+  h3 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 24px 0 10px;
+    color: var(--text);
+  }
+
+  p { margin-bottom: 14px; color: var(--text); }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  ul, ol { padding-left: 22px; margin-bottom: 14px; }
+  li { margin-bottom: 5px; }
+
+  /* ── Hero ────────────────────────────────────────────── */
+  .hero {
+    background: linear-gradient(135deg, #0071e3 0%, #0a84ff 50%, #34aadc 100%);
+    border-radius: var(--radius);
+    padding: 40px 44px;
+    color: white;
+    margin-bottom: 40px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: "🎓";
+    position: absolute;
+    right: 36px; top: 50%;
+    transform: translateY(-50%);
+    font-size: 80px;
+    opacity: 0.25;
+  }
+
+  .hero h1 { color: white; font-size: 32px; margin-bottom: 8px; }
+  .hero p { color: rgba(255,255,255,0.88); font-size: 16px; margin: 0; }
+
+  .hero-badges {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    margin-top: 20px;
+  }
+
+  .badge {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* ── Cards ───────────────────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+  }
+
+  .card h3 { margin-top: 0; }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .card-sm {
+    background: var(--surface);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--border);
+    text-align: center;
+  }
+
+  .card-sm .icon-big { font-size: 28px; display: block; margin-bottom: 8px; }
+  .card-sm h4 { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .card-sm p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+
+  /* ── Code ────────────────────────────────────────────── */
+  pre {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: var(--radius-sm);
+    padding: 20px 22px;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.7;
+    margin: 16px 0;
+  }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    background: rgba(0,0,0,0.06);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: #c0392b;
+  }
+
+  pre code {
+    background: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+  }
+
+  /* Syntax highlight colours */
+  .kw { color: #ff7ab2; }    /* keywords */
+  .cm { color: #7f9f7f; }    /* comments */
+  .st { color: #fc6a5d; }    /* strings */
+  .nb { color: #67b7a4; }    /* builtins */
+  .cn { color: #ffd66b; }    /* constants */
+
+  /* ── Steps ───────────────────────────────────────────── */
+  .steps { counter-reset: step; }
+
+  .step {
+    display: flex; gap: 18px;
+    margin-bottom: 20px;
+    align-items: flex-start;
+  }
+
+  .step-num {
+    counter-increment: step;
+    min-width: 32px; height: 32px;
+    background: var(--accent);
+    color: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .step-num::before { content: counter(step); }
+
+  .step-body { flex: 1; }
+  .step-body strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  .step-body p { margin: 0; color: var(--text-secondary); font-size: 14px; }
+
+  /* ── Table ───────────────────────────────────────────── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0 24px;
+    font-size: 14px;
+  }
+
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    background: var(--bg);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(0,0,0,0.02); }
+
+  /* ── Callout ─────────────────────────────────────────── */
+  .callout {
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    margin: 16px 0;
+    display: flex; gap: 12px; align-items: flex-start;
+    font-size: 14px;
+  }
+
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout.info { background: #e8f0fe; border-left: 3px solid #1a73e8; }
+  .callout.warn { background: #fef9e0; border-left: 3px solid #f5a623; }
+  .callout.tip  { background: #e6f4ea; border-left: 3px solid #34a853; }
+  .callout p { margin: 0; }
+
+  /* ── Tag ─────────────────────────────────────────────── */
+  .tag {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--tag-text);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+  }
+
+  /* ── Architecture tree ───────────────────────────────── */
+  .tree {
+    background: var(--code-bg);
+    color: var(--code-text);
+    border-radius: var(--radius-sm);
+    padding: 20px 22px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.9;
+  }
+
+  .tree .dir { color: #67b7a4; font-weight: 600; }
+  .tree .file { color: #e8e8ed; }
+  .tree .note { color: #7f9f7f; }
+
+  /* ── Divider ─────────────────────────────────────────── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 32px 0; }
+
+  /* ── Responsive ──────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-100%); transition: transform 0.3s; }
+    .sidebar.open { transform: translateX(0); }
+    .main { margin-left: 0; padding: 24px 20px; }
+    .hero { padding: 28px 24px; }
+    .hero::before { display: none; }
+    .card-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ── Scrollbar ───────────────────────────────────────── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══════════════════════════════════════════════════════ -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <h1>PhdScout 🎓</h1>
+    <span>Documentation</span>
+  </div>
+
+  <span class="nav-section">Getting Started</span>
+  <button class="nav-link active" onclick="show('overview', this)">
+    <span class="icon">🏠</span> Overview
+  </button>
+  <button class="nav-link" onclick="show('install', this)">
+    <span class="icon">⚙️</span> Installation
+  </button>
+  <button class="nav-link" onclick="show('quickstart', this)">
+    <span class="icon">🚀</span> Quickstart
+  </button>
+
+  <span class="nav-section">Usage</span>
+  <button class="nav-link" onclick="show('web-ui', this)">
+    <span class="icon">🖥️</span> Web Interface
+  </button>
+  <button class="nav-link" onclick="show('cli', this)">
+    <span class="icon">💻</span> CLI
+  </button>
+  <button class="nav-link" onclick="show('sources', this)">
+    <span class="icon">🔍</span> Job Sources
+  </button>
+
+  <span class="nav-section">Reference</span>
+  <button class="nav-link" onclick="show('config', this)">
+    <span class="icon">🔧</span> Configuration
+  </button>
+  <button class="nav-link" onclick="show('prompts', this)">
+    <span class="icon">✏️</span> Prompts
+  </button>
+  <button class="nav-link" onclick="show('architecture', this)">
+    <span class="icon">🏗️</span> Architecture
+  </button>
+  <button class="nav-link" onclick="show('deployment', this)">
+    <span class="icon">☁️</span> Deployment
+  </button>
+</nav>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════════════════ -->
+<main class="main">
+
+  <!-- ── Overview ───────────────────────────────────────────────────── -->
+  <section class="section active" id="overview">
+    <div class="hero">
+      <h1>PhdScout</h1>
+      <p>AI-powered search agent for PhD positions, postdocs, research fellowships, and academic staff roles. Powered by the Groq free API — no subscriptions required.</p>
+      <div class="hero-badges">
+        <span class="badge">100% Free</span>
+        <span class="badge">Groq API</span>
+        <span class="badge">Gradio UI</span>
+        <span class="badge">Python 3.10+</span>
+      </div>
+    </div>
+
+    <div class="card-grid">
+      <div class="card-sm">
+        <span class="icon-big">🔍</span>
+        <h4>Multi-source Search</h4>
+        <p>Euraxess, mlscientist.com, jobs.ac.uk searched simultaneously</p>
+      </div>
+      <div class="card-sm">
+        <span class="icon-big">🤖</span>
+        <h4>AI Scoring</h4>
+        <p>Each position scored 0–100 against your CV profile</p>
+      </div>
+      <div class="card-sm">
+        <span class="icon-big">✉️</span>
+        <h4>Cover Letters</h4>
+        <p>Personalised draft generated for every position</p>
+      </div>
+      <div class="card-sm">
+        <span class="icon-big">📦</span>
+        <h4>ZIP Export</h4>
+        <p>Download all approved applications in one click</p>
+      </div>
+    </div>
+
+    <h2>How it works</h2>
+    <div class="card">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Upload your CV</strong>
+            <p>PDF, DOCX, or TXT. The LLM extracts a structured profile: education, publications, skills, research interests.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Search job boards</strong>
+            <p>PhdScout queries Euraxess, mlscientist.com, and jobs.ac.uk in parallel, then deduplicates and filters by recency (expired listings discarded).</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Score & rank</strong>
+            <p>Each position is scored 0–100 for fit. The LLM reasons semantically — "NLP" and "natural language processing" are treated as equivalent.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Review & edit</strong>
+            <p>Load any position to see CV tailoring hints and a draft cover letter. Edit freely before approving.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Export</strong>
+            <p>Download all approved applications as a ZIP containing cover letters and position summaries.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Installation ───────────────────────────────────────────────── -->
+  <section class="section" id="install">
+    <h1>Installation</h1>
+    <p>PhdScout runs locally with Python 3.10+ or on HuggingFace Spaces.</p>
+
+    <h2>Clone & install</h2>
+    <pre><code>git clone https://github.com/Hipsterfil998/PhDScout.git
+cd PhDScout
+pip install -r requirements.txt</code></pre>
+
+    <h2>Get a Groq API key</h2>
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <p>Groq provides a generous free tier — no credit card required. Register at <a href="https://console.groq.com/keys" target="_blank">console.groq.com/keys</a>.</p>
+    </div>
+
+    <h2>Configure</h2>
+    <p>Create a <code>.env</code> file in the project root:</p>
+    <pre><code><span class="cm"># Required</span>
+LLM_BACKEND=groq
+GROQ_API_KEY=gsk_your_key_here
+
+<span class="cm"># Optional overrides (see Configuration section)</span>
+OUTPUT_DIR=./output</code></pre>
+
+    <h2>Run</h2>
+    <pre><code>python app.py</code></pre>
+    <p>Open <a href="http://localhost:7860">http://localhost:7860</a> in your browser.</p>
+
+    <h2>Dependencies</h2>
+    <table>
+      <tr><th>Package</th><th>Purpose</th></tr>
+      <tr><td><code>openai</code></td><td>Groq and Ollama API client (OpenAI-compatible)</td></tr>
+      <tr><td><code>gradio</code></td><td>Web UI</td></tr>
+      <tr><td><code>pdfplumber</code></td><td>PDF text extraction</td></tr>
+      <tr><td><code>python-docx</code></td><td>DOCX text extraction</td></tr>
+      <tr><td><code>beautifulsoup4 + lxml</code></td><td>HTML scraping</td></tr>
+      <tr><td><code>requests</code></td><td>HTTP client for scrapers</td></tr>
+      <tr><td><code>python-dotenv</code></td><td>.env loading</td></tr>
+    </table>
+  </section>
+
+  <!-- ── Quickstart ─────────────────────────────────────────────────── -->
+  <section class="section" id="quickstart">
+    <h1>Quickstart</h1>
+    <p>From zero to your first scored job list in under 5 minutes.</p>
+
+    <div class="card">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Upload your CV</strong>
+            <p>Click the upload area and select your PDF, DOCX, or TXT file.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Fill in the search fields</strong>
+            <p>Enter a research field (<em>"machine learning"</em>, <em>"computational neuroscience"</em>…), choose a location, and pick a position type.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Click "Parse CV & Search Positions"</strong>
+            <p>Wait ~2–3 minutes. The agent scrapes all sources, parses your CV, and scores every match.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Review results</strong>
+            <p>Switch to the <strong>Results</strong> tab. Positions are sorted by posting date (newest first) and labelled with a freshness indicator.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Generate & approve cover letters</strong>
+            <p>In <strong>Review & Edit</strong>, select a position, read the CV hints, edit the draft, and click <strong>Approve & Save</strong>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Export</strong>
+            <p>Go to the <strong>Export</strong> tab and download the ZIP.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <p><strong>Tip:</strong> Use comma-separated fields for broader searches: <em>"machine learning, NLP, computer vision"</em>.</p>
+    </div>
+  </section>
+
+  <!-- ── Web UI ─────────────────────────────────────────────────────── -->
+  <section class="section" id="web-ui">
+    <h1>Web Interface</h1>
+    <p>The Gradio UI is organised into three tabs.</p>
+
+    <h2>Tab 1 — Setup &amp; Search</h2>
+    <div class="card">
+      <table>
+        <tr><th>Field</th><th>Description</th></tr>
+        <tr><td><strong>CV upload</strong></td><td>PDF, DOCX, or TXT file</td></tr>
+        <tr><td><strong>Research field</strong></td><td>Free-text or comma-separated list</td></tr>
+        <tr><td><strong>Location</strong></td><td>40+ countries or custom value</td></tr>
+        <tr><td><strong>Position type</strong></td><td>PhD, postdoc, predoctoral, fellowship, research staff</td></tr>
+        <tr><td><strong>Min. match score</strong></td><td>Threshold for the "above score" count (all positions still visible)</td></tr>
+      </table>
+    </div>
+
+    <h2>Tab 2 — Results</h2>
+    <p>Displays a scored table with columns: <strong>#</strong>, <strong>Score</strong>, <strong>Title</strong>, <strong>Institution</strong>, <strong>Type</strong>, <strong>Freshness</strong>, <strong>Rec.</strong>, <strong>Why good fit</strong>.</p>
+
+    <h3>Freshness labels</h3>
+    <table>
+      <tr><th>Label</th><th>Meaning</th></tr>
+      <tr><td><span class="tag">🟢 Recent</span></td><td>Posted within the last 30 days</td></tr>
+      <tr><td><span class="tag">🟡 Older</span></td><td>Has a date, posted more than 30 days ago</td></tr>
+      <tr><td><span class="tag">🔴 Closing soon</span></td><td>Deadline within 14 days</td></tr>
+      <tr><td><em>empty</em></td><td>No date information available</td></tr>
+    </table>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <p>Expired listings (deadline already passed, or posted in a previous year) are automatically excluded from results.</p>
+    </div>
+
+    <h2>Tab 3 — Review &amp; Edit</h2>
+    <p>Select a position from the dropdown, click <strong>Load Position</strong>, then:</p>
+    <ul>
+      <li>Read the <strong>Position Details</strong> and match analysis</li>
+      <li>Follow the <strong>CV Tailoring Hints</strong> panel</li>
+      <li>Edit the <strong>Cover Letter</strong> draft freely</li>
+      <li>Click <strong>Regenerate</strong> for a different version</li>
+      <li>Download the letter as a <strong>.txt</strong> file</li>
+      <li>Click <strong>Approve &amp; Save</strong> to add it to the export queue</li>
+    </ul>
+  </section>
+
+  <!-- ── CLI ────────────────────────────────────────────────────────── -->
+  <section class="section" id="cli">
+    <h1>Command-Line Interface</h1>
+    <p>For batch use or scripting, PhdScout exposes a CLI via <code>main.py</code>.</p>
+
+    <h2>Basic usage</h2>
+    <pre><code>python main.py \
+  --cv path/to/cv.pdf \
+  --field "machine learning" \
+  --location "Germany" \
+  --type phd</code></pre>
+
+    <h2>Options</h2>
+    <table>
+      <tr><th>Flag</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>--cv</code></td><td><em>required</em></td><td>Path to CV file (PDF, DOCX, TXT)</td></tr>
+      <tr><td><code>--field</code></td><td><em>required</em></td><td>Research field(s), comma-separated</td></tr>
+      <tr><td><code>--location</code></td><td><code>Europe</code></td><td>Location filter</td></tr>
+      <tr><td><code>--type</code></td><td><code>phd</code></td><td>Position type</td></tr>
+      <tr><td><code>--min-score</code></td><td><code>60</code></td><td>Minimum match score to show</td></tr>
+    </table>
+
+    <h2>Python API</h2>
+    <pre><code><span class="kw">from</span> agent <span class="kw">import</span> JobAgent
+
+agent = JobAgent(
+    model=<span class="st">"llama-3.1-8b-instant"</span>,
+    backend=<span class="st">"groq"</span>,
+    api_key=<span class="st">"gsk_..."</span>,
+)
+
+profile, profile_text = agent.parse_cv(<span class="st">"cv.pdf"</span>)
+jobs = agent.search_jobs(field=<span class="st">"NLP"</span>, location=<span class="st">"Europe"</span>, position_type=<span class="st">"phd"</span>)
+scored = agent.score_jobs(jobs, profile_text)
+
+<span class="kw">for</span> job <span class="kw">in</span> scored[:5]:
+    m = job[<span class="st">"match"</span>]
+    <span class="nb">print</span>(m[<span class="st">"match_score"</span>], job[<span class="st">"title"</span>], job.get(<span class="st">"freshness"</span>))</code></pre>
+  </section>
+
+  <!-- ── Sources ────────────────────────────────────────────────────── -->
+  <section class="section" id="sources">
+    <h1>Job Sources</h1>
+
+    <div class="card-grid">
+      <div class="card-sm">
+        <span class="icon-big">🇪🇺</span>
+        <h4>Euraxess</h4>
+        <p>EU/worldwide research portal. Country-filtered.</p>
+      </div>
+      <div class="card-sm">
+        <span class="icon-big">🤖</span>
+        <h4>mlscientist.com</h4>
+        <p>ML &amp; AI academic positions worldwide.</p>
+      </div>
+      <div class="card-sm">
+        <span class="icon-big">🇬🇧</span>
+        <h4>jobs.ac.uk</h4>
+        <p>UK academic jobs. Queried only when UK location is selected.</p>
+      </div>
+    </div>
+
+    <h2>Freshness filtering</h2>
+    <p>After scraping, PhdScout automatically removes:</p>
+    <ul>
+      <li>Postings with a <strong>posting date in a previous year</strong></li>
+      <li>Postings with a <strong>deadline already passed</strong></li>
+      <li>Jobs with no date info are kept (benefit of the doubt)</li>
+    </ul>
+
+    <h2>Adding a source</h2>
+    <p>Create a new file in <code>agent/scrapers/</code> that subclasses <code>BaseScraper</code>:</p>
+    <pre><code><span class="kw">from</span> agent.scrapers.base <span class="kw">import</span> BaseScraper
+
+<span class="kw">class</span> MyScraper(BaseScraper):
+    name = <span class="st">"mysource"</span>
+
+    <span class="kw">def</span> scrape(self, field, location, position_type):
+        soup = self._fetch(<span class="st">f"https://example.com/jobs?q={field}"</span>)
+        <span class="kw">if</span> soup <span class="kw">is</span> <span class="nb">None</span>: <span class="kw">return</span> []
+        results = []
+        <span class="kw">for</span> card <span class="kw">in</span> soup.select(<span class="st">".job-card"</span>):
+            results.append({
+                <span class="st">"title"</span>: card.select_one(<span class="st">"h2"</span>).text,
+                <span class="st">"url"</span>: card.select_one(<span class="st">"a"</span>)[<span class="st">"href"</span>],
+                <span class="st">"posted"</span>: card.select_one(<span class="st">".date"</span>).text,
+                <span class="st">"source"</span>: self.name,
+                <span class="st">"type"</span>: self._detect_type(card.text, <span class="st">""</span>),
+            })
+        <span class="kw">return</span> results</code></pre>
+    <p>Then register it in <code>agent/searcher.py → _build_scrapers()</code>.</p>
+  </section>
+
+  <!-- ── Configuration ──────────────────────────────────────────────── -->
+  <section class="section" id="config">
+    <h1>Configuration</h1>
+    <p>All settings live in <code>config.py</code>. Edit the file directly — no restart needed if using the CLI, restart the Gradio app after changes.</p>
+
+    <h2>LLM settings</h2>
+    <table>
+      <tr><th>Parameter</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>default_model</code></td><td><code>llama-3.1-8b-instant</code></td><td>Groq model to use</td></tr>
+      <tr><td><code>max_tokens</code></td><td><code>4096</code></td><td>Max tokens per LLM response</td></tr>
+      <tr><td><code>llm_backend</code></td><td><code>ollama</code></td><td>Backend: <code>groq</code> | <code>huggingface</code> | <code>ollama</code></td></tr>
+    </table>
+
+    <h2>Scraper settings</h2>
+    <table>
+      <tr><th>Parameter</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>scraper_delay</code></td><td><code>1.5</code> s</td><td>Polite delay between HTTP requests</td></tr>
+      <tr><td><code>max_results_per_source</code></td><td><code>20</code></td><td>Max listings fetched per source</td></tr>
+    </table>
+
+    <h2>Freshness thresholds</h2>
+    <table>
+      <tr><th>Parameter</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>recent_days</code></td><td><code>30</code></td><td>Days since posting → 🟢 Recent</td></tr>
+      <tr><td><code>deadline_warn_days</code></td><td><code>14</code></td><td>Days until deadline → 🔴 Closing soon</td></tr>
+    </table>
+
+    <h2>UI defaults</h2>
+    <table>
+      <tr><th>Parameter</th><th>Default</th><th>Description</th></tr>
+      <tr><td><code>min_score_default</code></td><td><code>60</code></td><td>Default minimum match score slider value</td></tr>
+    </table>
+
+    <h2>Environment variables</h2>
+    <table>
+      <tr><th>Variable</th><th>Description</th></tr>
+      <tr><td><code>GROQ_API_KEY</code></td><td>Groq API key (takes priority over HF_TOKEN)</td></tr>
+      <tr><td><code>HF_TOKEN</code></td><td>HuggingFace token (fallback backend)</td></tr>
+      <tr><td><code>LLM_BACKEND</code></td><td>Override backend: <code>groq</code> | <code>huggingface</code> | <code>ollama</code></td></tr>
+      <tr><td><code>OUTPUT_DIR</code></td><td>Output directory for ZIP exports (default: <code>./output</code>)</td></tr>
+    </table>
+  </section>
+
+  <!-- ── Prompts ────────────────────────────────────────────────────── -->
+  <section class="section" id="prompts">
+    <h1>Prompts</h1>
+    <p>All LLM prompts are centralised in <code>agent/prompts.py</code>. Edit that file to tune the agent's behaviour — no code changes elsewhere required.</p>
+
+    <div class="callout warn">
+      <span class="callout-icon">⚠️</span>
+      <p>Prompts use Python <code>.format()</code> placeholders like <code>{profile}</code>. Keep all placeholders intact when editing.</p>
+    </div>
+
+    <h2>Available prompts</h2>
+    <table>
+      <tr><th>Constant</th><th>Used by</th><th>Controls</th></tr>
+      <tr><td><code>CV_PARSER_SYSTEM</code><br><code>CV_PARSER_PROMPT</code></td><td><code>CVParser</code></td><td>How the CV is structured into JSON. Tweak to extract custom fields.</td></tr>
+      <tr><td><code>JOB_MATCHER_SYSTEM</code><br><code>JOB_MATCHER_PROMPT</code></td><td><code>JobMatcher</code></td><td>Scoring criteria and guidelines. Edit the scoring guide to adjust thresholds.</td></tr>
+      <tr><td><code>CV_TAILOR_SYSTEM</code><br><code>CV_TAILOR_PROMPT</code></td><td><code>CVTailor</code></td><td>What tailoring hints to produce and how specific to be.</td></tr>
+      <tr><td><code>COVER_LETTER_SYSTEM</code><br><code>COVER_LETTER_PROMPT</code></td><td><code>CoverLetterWriter</code></td><td>Letter style, length, structure, and language detection.</td></tr>
+    </table>
+
+    <h2>Example: changing the letter length</h2>
+    <p>In <code>agent/prompts.py</code>, find <code>COVER_LETTER_SYSTEM</code> and change:</p>
+    <pre><code><span class="cm"># Before</span>
+The letter should be <span class="st">400-600 words (3-4 paragraphs)</span>.
+
+<span class="cm"># After</span>
+The letter should be <span class="st">250-350 words (2-3 paragraphs)</span>.</code></pre>
+
+    <h2>Example: stricter scoring</h2>
+    <p>In <code>JOB_MATCHER_PROMPT</code>, raise the thresholds in the scoring guide:</p>
+    <pre><code>Scoring guide:
+  85-100: Excellent — perfect research keyword overlap, recent publications
+  70-84:  Good — strong overlap on primary research area
+  50-69:  Partial — some overlap, transferable skills
+  0-49:   Skip — different area or missing key requirements</code></pre>
+  </section>
+
+  <!-- ── Architecture ───────────────────────────────────────────────── -->
+  <section class="section" id="architecture">
+    <h1>Architecture</h1>
+
+    <h2>Project structure</h2>
+    <div class="tree">
+<span class="dir">PhDScout/</span>
+├── <span class="file">app.py</span>              <span class="note"># Gradio web interface</span>
+├── <span class="file">config.py</span>           <span class="note"># Runtime settings (model, thresholds, delays)</span>
+├── <span class="file">main.py</span>             <span class="note"># CLI entry point</span>
+├── <span class="file">requirements.txt</span>
+├── <span class="dir">agent/</span>
+│   ├── <span class="file">__init__.py</span>         <span class="note"># Public API: JobAgent, LLMQuotaError</span>
+│   ├── <span class="file">pipeline.py</span>         <span class="note"># JobAgent orchestrator</span>
+│   ├── <span class="file">prompts.py</span>          <span class="note"># All LLM prompts ← edit here</span>
+│   ├── <span class="file">base_service.py</span>     <span class="note"># BaseLLMService base class</span>
+│   ├── <span class="file">cv_parser.py</span>        <span class="note"># CV extraction + LLM parsing</span>
+│   ├── <span class="file">job_matcher.py</span>      <span class="note"># Scoring engine</span>
+│   ├── <span class="file">cv_tailor.py</span>        <span class="note"># Tailoring hints generator</span>
+│   ├── <span class="file">cover_letter.py</span>     <span class="note"># Cover letter writer</span>
+│   ├── <span class="file">searcher.py</span>         <span class="note"># JobSearcher (orchestrates scrapers)</span>
+│   ├── <span class="file">llm_client.py</span>       <span class="note"># Groq / HuggingFace / Ollama client</span>
+│   ├── <span class="file">utils.py</span>            <span class="note"># JSON parsing, shared helpers</span>
+│   └── <span class="dir">scrapers/</span>
+│       ├── <span class="file">base.py</span>         <span class="note"># BaseScraper ABC</span>
+│       ├── <span class="file">euraxess.py</span>     <span class="note"># EuraxessScraper</span>
+│       ├── <span class="file">mlscientist.py</span>  <span class="note"># MLScientistScraper</span>
+│       └── <span class="file">jobs_ac_uk.py</span>   <span class="note"># JobsAcUkScraper</span>
+└── <span class="dir">tests/</span>              <span class="note"># 109 unit tests (pytest)</span>
+    </div>
+
+    <h2>Pipeline flow</h2>
+    <div class="card">
+      <p style="font-family:var(--font-mono);font-size:13px;line-height:2;color:#1d1d1f;">
+        CV file<br>
+        &nbsp;&nbsp;↓ <span style="color:#6e6e73">CVParser.extract_raw_text()</span><br>
+        Raw text<br>
+        &nbsp;&nbsp;↓ <span style="color:#6e6e73">CVParser.parse() → LLM → CVProfile JSON</span><br>
+        &nbsp;&nbsp;↓ <span style="color:#6e6e73">CVParser.summarize() → profile_text</span><br>
+        profile_text<br>
+        &nbsp;&nbsp;↓ (in parallel with search)<br>
+        &nbsp;&nbsp;↓ <span style="color:#6e6e73">JobSearcher.search() → scrapers → deduplicate → filter stale → label freshness</span><br>
+        jobs[]<br>
+        &nbsp;&nbsp;↓ <span style="color:#6e6e73">JobMatcher.score_all() → LLM × N → sort by score</span><br>
+        scored_jobs[]<br>
+        &nbsp;&nbsp;↓ (per selected job)<br>
+        &nbsp;&nbsp;↓ <span style="color:#6e6e73">CVTailor.generate() → LLM → TailoringHints</span><br>
+        &nbsp;&nbsp;↓ <span style="color:#6e6e73">CoverLetterWriter.generate() → LLM → draft letter</span><br>
+        approved_jobs[] → ZIP export
+      </p>
+    </div>
+
+    <h2>LLM backends</h2>
+    <table>
+      <tr><th>Backend</th><th>env var</th><th>Notes</th></tr>
+      <tr><td><strong>Groq</strong> (recommended)</td><td><code>GROQ_API_KEY</code></td><td>Free tier, fast, OpenAI-compatible</td></tr>
+      <tr><td><strong>Ollama</strong></td><td>—</td><td>Local inference, set <code>LLM_BACKEND=ollama</code></td></tr>
+      <tr><td><strong>HuggingFace</strong></td><td><code>HF_TOKEN</code></td><td>Fallback, free tier has rate limits</td></tr>
+    </table>
+  </section>
+
+  <!-- ── Deployment ─────────────────────────────────────────────────── -->
+  <section class="section" id="deployment">
+    <h1>Deployment</h1>
+
+    <h2>HuggingFace Spaces (recommended)</h2>
+    <div class="card">
+      <div class="steps">
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Fork or create a Space</strong>
+            <p>Go to <a href="https://huggingface.co/spaces" target="_blank">huggingface.co/spaces</a> → New Space → SDK: Gradio.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Push the code</strong>
+            <p>Add the Space as a remote and push: <code>git push space main</code></p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Set secrets</strong>
+            <p>In Space Settings → Variables and Secrets, add <code>GROQ_API_KEY</code>.</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <strong>Add HF frontmatter to README</strong>
+            <p>Run <code>./push_to_hf.sh</code> — it injects the required YAML frontmatter automatically.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <h2>GitHub Pages (this documentation)</h2>
+    <div class="callout tip">
+      <span class="callout-icon">💡</span>
+      <p>This documentation is a single HTML file at <code>docs/index.html</code> — no build step required.</p>
+    </div>
+    <p>To enable GitHub Pages:</p>
+    <ol>
+      <li>Go to your GitHub repo → <strong>Settings → Pages</strong></li>
+      <li>Source: <strong>Deploy from a branch</strong></li>
+      <li>Branch: <code>main</code> / folder: <code>/docs</code></li>
+      <li>Click <strong>Save</strong></li>
+    </ol>
+    <p>The docs will be live at <code>https://&lt;username&gt;.github.io/PhDScout</code>.</p>
+
+    <h2>Editing the docs</h2>
+    <p>To modify this documentation directly on GitHub:</p>
+    <ol>
+      <li>Go to your repo on GitHub</li>
+      <li>Navigate to <code>docs/index.html</code></li>
+      <li>Click the <strong>pencil icon</strong> (Edit this file)</li>
+      <li>Edit the HTML — each section is a <code>&lt;section class="section" id="..."&gt;</code> block</li>
+      <li>Commit directly to <code>main</code> — GitHub Pages rebuilds automatically</li>
+    </ol>
+
+    <div class="callout info">
+      <span class="callout-icon">ℹ️</span>
+      <p>The navigation links are wired by JavaScript at the bottom of the file. To add a new section: add a <code>&lt;button&gt;</code> in the sidebar and a matching <code>&lt;section&gt;</code> in the main area.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  function show(id, btn) {
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-link').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    btn.classList.add('active');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
+</body>
+</html>
