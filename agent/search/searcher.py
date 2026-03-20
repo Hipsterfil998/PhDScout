@@ -11,6 +11,8 @@ from agent.search.scrapers import (
     EuraxessScraper,
     JobsAcUkScraper,
     MLScientistScraper,
+    NatureCareersScraper,
+    ScholarshipDbScraper,
 )
 from agent.search.scrapers.base import BaseScraper, _DELAY
 
@@ -111,6 +113,8 @@ class JobSearcher:
         scrapers: list[BaseScraper] = [
             EuraxessScraper(),
             MLScientistScraper(),
+            ScholarshipDbScraper(),
+            NatureCareersScraper(),
         ]
         if location.lower() in _UK_LOCATIONS or location.lower() in _WORLDWIDE_LOCATIONS:
             scrapers.insert(0, JobsAcUkScraper())

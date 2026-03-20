@@ -40,7 +40,9 @@ class MLScientistScraper(BaseScraper):
         "denmark": "denmark",
         "france": "france",
         "norway": "norway",
-        "canada": "canada",
+        "austria": "austria",
+        "ireland": "ireland",
+        "italy": "italy",
         "united states": "united-states",
         "usa": "united-states",
         "spain": "spain",
@@ -87,12 +89,22 @@ class MLScientistScraper(BaseScraper):
                     if cl.startswith("category-")
                     and cl.replace("category-", "") not in self._NON_COUNTRY
                 ]
-                loc_text = country_cats[0] if country_cats else location
+                loc_text = country_cats[0] if country_cats else ""
 
+                # Filter by CSS class for mapped countries.
                 if (
                     location.lower() not in ("worldwide", "europe", "europe (all)", "")
                     and country_slug
                     and country_slug not in card_classes
+                ):
+                    continue
+
+                # For unmapped countries: filter by extracted location text when available.
+                if (
+                    location.lower() not in ("worldwide", "europe", "europe (all)", "")
+                    and not country_slug
+                    and loc_text
+                    and location.lower() not in loc_text.lower()
                 ):
                     continue
 

@@ -69,7 +69,7 @@ class EuraxessScraper(BaseScraper):
             desc = desc_el.get_text(strip=True) if desc_el else ""
 
             loc_el = card.select_one(".id-Work-Locations .ecl-text-standard")
-            loc_text = location
+            loc_text = ""
             if loc_el:
                 raw = loc_el.get_text(" ", strip=True)
                 m = re.search(r"Number of offers[^,]+,\s*([^,]+),", raw)
@@ -80,9 +80,11 @@ class EuraxessScraper(BaseScraper):
             )
             deadline = deadline_el.get_text(strip=True) if deadline_el else posted
 
-            # Post-filter by country (Euraxess ignores job_country[] server-side)
+            # Post-filter by country (Euraxess ignores job_country[] server-side).
+            # If loc_text is empty (location element missing), exclude the job for
+            # country-specific searches to avoid false positives.
             if location.lower() not in ("europe", "europe (all)", "worldwide", ""):
-                if location.lower() not in loc_text.lower():
+                if not loc_text or location.lower() not in loc_text.lower():
                     continue
 
             title_text = title_el.get_text(strip=True)

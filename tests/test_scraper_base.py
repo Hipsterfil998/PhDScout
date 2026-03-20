@@ -51,6 +51,44 @@ class TestParseDate:
     def test_case_insensitive_prefix(self):
         assert self._p("POSTED ON: 10 January 2026") == datetime(2026, 1, 10)
 
+    # -- relative dates (scholarshipdb / nature.com format) ------------------
+
+    def test_relative_hours_ago(self):
+        result = self._p("about 3 hours ago")
+        assert result is not None
+        delta = (datetime.now() - result).total_seconds()
+        assert 0 <= delta < 4 * 3600  # within 4 h of now
+
+    def test_relative_days_ago(self):
+        result = self._p("5 days ago")
+        assert result is not None
+        delta_days = (datetime.now() - result).days
+        assert 4 <= delta_days <= 6
+
+    def test_relative_weeks_ago(self):
+        result = self._p("2 weeks ago")
+        assert result is not None
+        delta_days = (datetime.now() - result).days
+        assert 13 <= delta_days <= 15
+
+    def test_relative_months_ago(self):
+        result = self._p("about 1 month ago")
+        assert result is not None
+        delta_days = (datetime.now() - result).days
+        assert 28 <= delta_days <= 32
+
+    def test_relative_years_ago(self):
+        result = self._p("1 year ago")
+        assert result is not None
+        delta_days = (datetime.now() - result).days
+        assert 363 <= delta_days <= 367
+
+    def test_relative_minutes_ago(self):
+        result = self._p("10 minutes ago")
+        assert result is not None
+        delta = (datetime.now() - result).total_seconds()
+        assert 0 <= delta < 11 * 60
+
 
 class TestDetectType:
     def _d(self, title, desc=""):

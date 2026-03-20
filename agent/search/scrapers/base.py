@@ -111,11 +111,13 @@ class BaseScraper(ABC):
     def _parse_date(text: str | None) -> datetime | None:
         """Parse a free-form date string into a ``datetime``, or ``None`` on failure.
 
-        Handles formats produced by Euraxess, mlscientist, and jobs.ac.uk:
+        Handles formats produced by Euraxess, mlscientist, jobs.ac.uk, and
+        scholarshipdb (relative dates):
         - ISO: ``2025-03-15`` or ``2025-03-15T10:00:00``
         - ``15 March 2025`` / ``15 Mar 2025``
         - ``March 15, 2025`` / ``Mar 15, 2025``
         - ``15/03/2025``
+        - Relative: ``2 days ago``, ``about 3 hours ago``, ``1 month ago``
         Leading prefixes ("Posted on:", "Closes", "Deadline:", …) are stripped.
         """
         if not text:
@@ -125,6 +127,25 @@ class BaseScraper(ABC):
             r"^(posted\s+on\s*:?|closes?\s*:?|deadline\s*:?|closing\s+date\s*:?)\s*",
             "", text.strip(), flags=re.IGNORECASE,
         ).strip()
+        # Relative dates: "about 3 hours ago", "2 days ago", "1 month ago", etc.
+        m = re.search(
+            r"(\d+)\s+(second|minute|hour|day|week|month|year)s?\s+ago",
+            text, re.IGNORECASE,
+        )
+        if m:
+            n, unit = int(m.group(1)), m.group(2).lower()
+            from datetime import timedelta
+            now = datetime.now()
+            delta_map = {
+                "second": timedelta(seconds=n),
+                "minute": timedelta(minutes=n),
+                "hour":   timedelta(hours=n),
+                "day":    timedelta(days=n),
+                "week":   timedelta(weeks=n),
+                "month":  timedelta(days=n * 30),
+                "year":   timedelta(days=n * 365),
+            }
+            return now - delta_map[unit]
         # ISO format
         m = re.match(r"(\d{4})-(\d{2})-(\d{2})", text)
         if m:
