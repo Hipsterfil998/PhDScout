@@ -15,6 +15,10 @@ from agent.scrapers import (
 from agent.scrapers.base import BaseScraper, _DELAY
 
 
+_RECENT_DAYS = 30        # posted within N days → "Recent"
+_DEADLINE_WARN_DAYS = 14  # deadline within N days → "Closing soon"
+
+
 class JobListing(TypedDict, total=False):
     title: str
     institution: str
@@ -23,6 +27,7 @@ class JobListing(TypedDict, total=False):
     description: str
     deadline: str | None
     posted: str | None
+    freshness: str        # "🟢 Recent" | "🟡 Older" | "🔴 Closing soon" | ""
     email: str | None
     source: str
     type: str
@@ -84,6 +89,11 @@ class JobSearcher:
                 if j.get("type") == pt or j.get("type") == "other"
             ]
 
+        now = datetime.now()
+        all_listings = [j for j in all_listings if not self._is_stale(j, now)]
+        for j in all_listings:
+            j["freshness"] = self._freshness_label(j, now)
+
         all_listings.sort(key=self._sort_key, reverse=True)
         return all_listings
 
@@ -104,6 +114,51 @@ class JobSearcher:
         if location.lower() in _UK_LOCATIONS or location.lower() in _WORLDWIDE_LOCATIONS:
             scrapers.insert(0, JobsAcUkScraper())
         return scrapers
+
+    @staticmethod
+    def _is_stale(job: dict, now: datetime) -> bool:
+        """Return True if the job is clearly outdated and should be excluded.
+
+        A job is stale if:
+        - Its posting date is parsed and falls in a previous year, OR
+        - Its deadline is parsed and has already passed.
+        Jobs with no date information are kept (benefit of the doubt).
+        """
+        posted = BaseScraper._parse_date(job.get("posted"))
+        if posted is not None and posted.year < now.year:
+            return True
+        deadline = BaseScraper._parse_date(job.get("deadline"))
+        if deadline is not None and deadline.date() < now.date():
+            return True
+        return False
+
+    @staticmethod
+    def _freshness_label(job: dict, now: datetime) -> str:
+        """Return a human-readable freshness indicator for the job.
+
+        Priority:
+        1. 🔴 Closing soon — deadline within _DEADLINE_WARN_DAYS days
+        2. 🟢 Recent       — posted within _RECENT_DAYS days
+        3. 🟡 Older        — has date info but outside the above windows
+        4. ""              — no date information available
+        """
+        deadline = BaseScraper._parse_date(job.get("deadline"))
+        if deadline is not None:
+            days_left = (deadline.date() - now.date()).days
+            if 0 <= days_left <= _DEADLINE_WARN_DAYS:
+                return "🔴 Closing soon"
+
+        posted = BaseScraper._parse_date(job.get("posted"))
+        if posted is not None:
+            days_ago = (now.date() - posted.date()).days
+            if days_ago <= _RECENT_DAYS:
+                return "🟢 Recent"
+            return "🟡 Older"
+
+        if deadline is not None:
+            return "🟡 Older"
+
+        return ""
 
     @staticmethod
     def _sort_key(job: dict) -> tuple:

@@ -67,6 +67,7 @@ def _fmt_scored_table(jobs: list) -> list[list]:
         rows.append([
             i, m.get("match_score", 0), job.get("title", ""),
             job_institution(job), job.get("type", ""),
+            job.get("freshness", ""),
             icons.get(m.get("recommendation", ""), ""),
             why[:60] + "..." if len(why) > 60 else why,
         ])
@@ -83,7 +84,8 @@ def _fmt_job_details(job: dict, match: dict) -> str:
         f"## {job.get('title', 'Unknown')}",
         f"**{job_institution(job) or 'Unknown'}** — {job.get('location', '')}",
         "",
-        f"**Type:** {job.get('type', '')}  |  **Deadline:** {job.get('deadline') or 'N/A'}",
+        f"**Type:** {job.get('type', '')}  |  **Deadline:** {job.get('deadline') or 'N/A'}"
+        + (f"  |  {job['freshness']}" if job.get('freshness') else ""),
     ]
     if url:
         lines.append(f"**URL:** [{url}]({url})")
@@ -470,7 +472,7 @@ with gr.Blocks(
                 with gr.Column(scale=2):
                     gr.Markdown("### Scored Positions")
                     scored_df = gr.Dataframe(
-                        headers=["#", "Score", "Title", "Institution", "Type", "Rec.", "Why good fit"],
+                        headers=["#", "Score", "Title", "Institution", "Type", "Freshness", "Rec.", "Why good fit"],
                         interactive=False, wrap=True,
                     )
             go_review_btn = gr.Button("Go to Review →", variant="secondary")
