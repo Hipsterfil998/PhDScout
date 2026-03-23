@@ -145,20 +145,29 @@ export default function SearchTab({ onDone }) {
 
       {/* Min score */}
       <div>
-        <label className="block text-[10px] font-mono tracking-widest uppercase text-[#7a7a8f] mb-1.5">
-          Minimum match score: <span className="normal-case text-base leading-none">{'🎓'.repeat(Math.round(minScore / 10))}{'◽'.repeat(10 - Math.round(minScore / 10))}</span>
+        <label className="block text-[10px] font-mono tracking-widest uppercase text-[#7a7a8f] mb-2">
+          Minimum match score
         </label>
-        <input
-          type="range"
-          min={30} max={90} step={5}
-          value={minScore}
-          onChange={e => setMinScore(Number(e.target.value))}
-          className="w-full accent-[#818cf8]"
-        />
-        <div className="flex justify-between text-[10px] font-mono text-[#7a7a8f] mt-0.5">
-          <span>30 — more results</span>
-          <span>90 — higher quality</span>
+        <div className="flex gap-1">
+          {Array.from({ length: 10 }, (_, i) => {
+            const val = (i + 1) * 10
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setMinScore(val)}
+                title={`${val}`}
+                className="text-xl leading-none transition-transform hover:scale-125 focus:outline-none"
+                style={{ opacity: val <= minScore ? 1 : 0.25 }}
+              >
+                🎓
+              </button>
+            )
+          })}
         </div>
+        <p className="text-[10px] font-mono text-[#7a7a8f] mt-1">
+          {minScore}/100 — {minScore <= 40 ? 'more results' : minScore >= 80 ? 'higher quality' : 'balanced'}
+        </p>
       </div>
 
       {/* Error */}
