@@ -82,10 +82,10 @@ export default function LandingPage({ onStart }) {
       {/* ── Navbar ─────────────────────────────────────────────── */}
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#2e2e38] bg-[#0f0f12]/90 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <img src="/logo.svg" alt="ScholarMatchAI" className="w-8 h-8 rounded-lg" />
             <span className="font-mono font-semibold text-sm text-[#e8e8f0]">ScholarMatchAI</span>
-          </div>
+          </button>
           <div className="flex items-center gap-6">
             <a
               href="https://hipsterfil998.github.io/ScholarMatchAI"
@@ -289,10 +289,10 @@ export default function LandingPage({ onStart }) {
       {/* ── Footer ─────────────────────────────────────────────── */}
       <footer className="border-t border-[#2e2e38] py-8 px-6">
         <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
+          <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-3 hover:opacity-70 transition-opacity">
             <img src="/logo.svg" alt="" className="w-5 h-5 rounded" />
             <span className="text-[10px] font-mono text-[#7a7a8f]">© 2026 ScholarMatchAI</span>
-          </div>
+          </button>
           <div className="flex gap-6 text-[10px] font-mono text-[#7a7a8f]">
             <a href="https://github.com/Hipsterfil998/ScholarMatchAI" target="_blank" rel="noreferrer" className="hover:text-[#e8e8f0] transition-colors">GitHub</a>
             <a href="https://hipsterfil998.github.io/ScholarMatchAI" target="_blank" rel="noreferrer" className="hover:text-[#e8e8f0] transition-colors">Docs</a>
