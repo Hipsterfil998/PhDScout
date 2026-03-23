@@ -51,7 +51,8 @@ export default function App() {
     <div className="min-h-screen bg-[#0f0f12] flex flex-col">
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#2e2e38] bg-[#0f0f12]/90 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4">
-          <span className="font-mono font-semibold text-sm tracking-wider text-[#e8e8f0] link-underline">
+          <img src="/logo.svg" alt="PhdScout" className="w-8 h-8 rounded-lg" />
+          <span className="font-mono font-semibold text-sm tracking-wider text-[#e8e8f0]">
             PhdScout
           </span>
           <div className="ml-auto text-[10px] font-mono tracking-widest uppercase text-[#7a7a8f] hidden sm:block">

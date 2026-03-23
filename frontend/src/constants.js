@@ -25,7 +25,6 @@ export const POSITION_TYPES = [
   { value: 'postdoc',        label: 'Postdoc' },
   { value: 'fellowship',     label: 'Fellowship' },
   { value: 'research_staff', label: 'Research staff' },
-  { value: 'any',            label: 'Any' },
 ]
 
 export const REC_CONFIG = {
