@@ -144,7 +144,7 @@ export default function LandingPage({ onStart }) {
             style={{ animationDelay: '0.22s' }}
           >
             Upload your CV, set your research field and location. ScholarMatchAI searches 5 job boards,
-            scores every position against your profile, and drafts a tailored cover letter — in under 3 minutes.
+            scores every position against your profile, and drafts a tailored cover letter. All in under 3 minutes.
           </p>
 
           {/* CTAs */}
