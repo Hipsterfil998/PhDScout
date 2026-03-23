@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
+        sans: ['DM Sans', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
         mono: ['IBM Plex Mono', 'monospace'],
-        sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Helvetica Neue', 'sans-serif'],
       },
       colors: {
         bg:     '#0f0f12',
