@@ -1,4 +1,4 @@
-"""FastAPI backend for PhdScout — replaces Gradio app.py."""
+"""FastAPI backend for ScholarMatchAI — replaces Gradio app.py."""
 
 from __future__ import annotations
 
@@ -21,11 +21,11 @@ from config import config
 # App setup
 # ---------------------------------------------------------------------------
 
-app = FastAPI(title="PhdScout API", version="1.0.0")
+app = FastAPI(title="ScholarMatchAI API", version="1.0.0")
 
 _ORIGINS = [
-    "https://phdscout.com",
-    "https://www.phdscout.com",
+    "https://scholarmatchai.com",
+    "https://www.scholarmatchai.com",
     "http://localhost:5173",   # Vite dev server
     "http://localhost:4173",   # Vite preview
 ]

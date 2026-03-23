@@ -51,9 +51,9 @@ export default function App() {
     <div className="min-h-screen bg-[#0f0f12] flex flex-col">
       <header className="fixed top-0 left-0 right-0 z-50 border-b border-[#2e2e38] bg-[#0f0f12]/90 backdrop-blur-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center gap-4">
-          <img src="/logo.svg" alt="PhdScout" className="w-8 h-8 rounded-lg" />
+          <img src="/logo.svg" alt="ScholarMatchAI" className="w-8 h-8 rounded-lg" />
           <span className="font-mono font-semibold text-sm tracking-wider text-[#e8e8f0]">
-            PhdScout
+            ScholarMatchAI
           </span>
           <div className="ml-auto text-[10px] font-mono tracking-widest uppercase text-[#7a7a8f] hidden sm:block">
             Free · No sign-up · Powered by Groq
@@ -114,7 +114,7 @@ export default function App() {
 
       <footer className="border-t border-[#2e2e38]">
         <div className="max-w-6xl mx-auto px-4 py-3 text-[10px] font-mono tracking-wide text-[#7a7a8f] flex flex-wrap gap-4">
-          <span>© 2025 PhdScout</span>
+          <span>© 2025 ScholarMatchAI</span>
           <span>CVs are processed in memory and never stored</span>
           <span>Sources: Euraxess · ScholarshipDb · Nature Careers · mlscientist.com</span>
         </div>

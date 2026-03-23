@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>PhdScout — Documentation</title>
+<title>ScholarMatchAI — Documentation</title>
 <style>
   :root {
     --bg: #000000;
@@ -380,7 +380,7 @@
 <!-- ═══ SIDEBAR ═══════════════════════════════════════════════════════ -->
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-logo">
-    <h1>PhdScout 🎓</h1>
+    <h1>ScholarMatchAI 🎓</h1>
     <span>Documentation</span>
   </div>
 
@@ -427,7 +427,7 @@
   <!-- ── Overview ───────────────────────────────────────────────────── -->
   <section class="section active" id="overview">
     <div class="hero">
-      <h1>PhdScout</h1>
+      <h1>ScholarMatchAI</h1>
       <p>AI-powered search agent for PhD positions, postdocs, research fellowships, and academic staff roles. Powered by the Groq free API — no subscriptions required.</p>
       <div class="hero-badges">
         <span class="badge">100% Free</span>
@@ -474,7 +474,7 @@
           <div class="step-num"></div>
           <div class="step-body">
             <strong>Search job boards</strong>
-            <p>PhdScout queries Euraxess, mlscientist.com, jobs.ac.uk, scholarshipdb.net, and nature.com/careers in parallel, then deduplicates and filters by recency (expired listings discarded).</p>
+            <p>ScholarMatchAI queries Euraxess, mlscientist.com, jobs.ac.uk, scholarshipdb.net, and nature.com/careers in parallel, then deduplicates and filters by recency (expired listings discarded).</p>
           </div>
         </div>
         <div class="step">
@@ -505,11 +505,11 @@
   <!-- ── Installation ───────────────────────────────────────────────── -->
   <section class="section" id="install">
     <h1>Installation</h1>
-    <p>PhdScout runs locally with Python 3.10+ or on HuggingFace Spaces.</p>
+    <p>ScholarMatchAI runs locally with Python 3.10+ or on HuggingFace Spaces.</p>
 
     <h2>Clone & install</h2>
-    <pre><code>git clone https://github.com/Hipsterfil998/PhDScout.git
-cd PhDScout
+    <pre><code>git clone https://github.com/Hipsterfil998/ScholarMatchAI.git
+cd ScholarMatchAI
 pip install -r requirements.txt</code></pre>
 
     <h2>Get a Groq API key</h2>
@@ -651,7 +651,7 @@ OUTPUT_DIR=./output</code></pre>
   <!-- ── CLI ────────────────────────────────────────────────────────── -->
   <section class="section" id="cli">
     <h1>Command-Line Interface</h1>
-    <p>For batch use or scripting, PhdScout exposes a CLI via <code>main.py</code>.</p>
+    <p>For batch use or scripting, ScholarMatchAI exposes a CLI via <code>main.py</code>.</p>
 
     <h2>Basic usage</h2>
     <pre><code>python main.py \
@@ -721,7 +721,7 @@ scored = agent.score_jobs(jobs, profile_text)
     </div>
 
     <h2>Freshness filtering</h2>
-    <p>After scraping, PhdScout automatically removes:</p>
+    <p>After scraping, ScholarMatchAI automatically removes:</p>
     <ul>
       <li>Postings with a <strong>posting date in a previous year</strong></li>
       <li>Postings with a <strong>deadline already passed</strong></li>
@@ -729,7 +729,7 @@ scored = agent.score_jobs(jobs, profile_text)
     </ul>
 
     <h2>PhD eligibility gate</h2>
-    <p>Before scoring, PhdScout checks whether the candidate holds or is pursuing a PhD and enforces two caps on postdoc and fellowship positions:</p>
+    <p>Before scoring, ScholarMatchAI checks whether the candidate holds or is pursuing a PhD and enforces two caps on postdoc and fellowship positions:</p>
     <table>
       <tr><th>Candidate status</th><th>Postdoc / Fellowship score cap</th></tr>
       <tr><td>No PhD detected in CV</td><td>≤ 30 — set to <em>skip</em></td></tr>
@@ -853,7 +853,7 @@ The letter should be <span class="st">250-350 words (2-3 paragraphs)</span>.</co
 
     <h2>Project structure</h2>
     <div class="tree">
-<span class="dir">PhDScout/</span>
+<span class="dir">ScholarMatchAI/</span>
 ├── <span class="file">app.py</span>              <span class="note"># Gradio web interface</span>
 ├── <span class="file">config.py</span>           <span class="note"># Runtime settings (model, thresholds, delays)</span>
 ├── <span class="file">main.py</span>             <span class="note"># CLI entry point</span>
@@ -967,7 +967,7 @@ The letter should be <span class="st">250-350 words (2-3 paragraphs)</span>.</co
       <li>Branch: <code>main</code> / folder: <code>/docs</code></li>
       <li>Click <strong>Save</strong></li>
     </ol>
-    <p>The docs will be live at <code>https://&lt;username&gt;.github.io/PhDScout</code>.</p>
+    <p>The docs will be live at <code>https://&lt;username&gt;.github.io/ScholarMatchAI</code>.</p>
 
     <h2>Editing the docs</h2>
     <p>To modify this documentation directly on GitHub:</p>

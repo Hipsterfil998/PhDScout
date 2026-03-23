@@ -1,25 +1,15 @@
----
-title: PhDScout
-emoji: 🎓
-colorFrom: blue
-colorTo: indigo
-sdk: gradio
-sdk_version: "5.23.3"
-app_file: app.py
-pinned: false
-license: mit
-short_description: AI-powered search agent for PhD and academic positions
----
+<p align="center">
+  <img src="frontend/public/logo.svg" alt="ScholarMatchAI" width="80" />
+</p>
 
-<h1 align="center">PhdScout 🎓</h1>
+<h1 align="center">ScholarMatchAI 🎓</h1>
 
 <p align="center">
-  <strong>AI-powered search agent for PhD positions, postdocs, research fellowships, and academic staff roles.</strong>
+  <strong>AI-powered search and application tool for PhD positions, postdocs, research fellowships, and academic staff roles.</strong>
 </p>
 
 <p align="center">
   🆓 <strong>100% free</strong> — no subscriptions, no API costs, no sign-up required.<br>
-  Live demo on HuggingFace Spaces: <a href="https://huggingface.co/spaces/HipFil98/PhDScout">HipFil98/PhDScout</a><br>
   📖 <a href="https://hipsterfil998.github.io/PhDScout">Full documentation</a>
 </p>
 
@@ -27,7 +17,7 @@ short_description: AI-powered search agent for PhD and academic positions
 
 ## What it does
 
-Upload your CV, set a research field and country, and PhdScout will:
+Upload your CV, set a research field and country, and ScholarMatchAI will:
 
 - **Search** multiple academic job boards for open positions
 - **Score** each position against your profile (0–100 match score)
@@ -41,12 +31,12 @@ Upload your CV, set a research field and country, and PhdScout will:
 
 1. Upload your CV (PDF, DOCX, or TXT)
 2. Enter your research field (e.g. `machine learning`, `computational biology`)
-3. Select a country or region from the dropdown (40+ options, or type a custom value)
+3. Select a country or region from the dropdown (40+ options)
 4. Choose the position type (`PhD`, `postdoc`, `fellowship`, `predoctoral`, `research staff`)
 5. Set a minimum match score (used as a recommendation threshold — all positions are reviewable)
 6. Click **Parse CV & Search Positions** and wait (~2–3 minutes)
 7. In the **Results** tab, browse all scored positions
-8. In the **Review & Edit** tab, load any position, read CV tailoring hints, and edit the cover letter
+8. In the **Review** tab, load any position, read CV tailoring hints, and edit the cover letter
 9. Click **Approve & Save** for positions you want to apply to
 10. In the **Export** tab, download all approved applications as a ZIP
 
@@ -72,46 +62,42 @@ Get a free Groq API key at [console.groq.com/keys](https://console.groq.com/keys
 Then run:
 
 ```bash
-python app.py
+python server.py
 ```
 
-The app will be available at `http://localhost:7860`.
+The API will be available at `http://localhost:8000`. Start the frontend with:
+
+```bash
+cd frontend && npm install && npm run dev
+```
 
 ---
 
 ## Project structure
 
 ```
-PhDScout/
-├── app.py                      # Gradio web interface
+ScholarMatchAI/
+├── server.py                   # FastAPI backend
 ├── config.py                   # Runtime settings (model, thresholds, delays)
 ├── requirements.txt
+├── frontend/                   # React + Vite + Tailwind frontend
+│   └── src/
+│       ├── App.jsx
+│       ├── api.js
+│       ├── constants.js
+│       └── components/
+│           ├── SearchTab.jsx
+│           ├── ResultsTab.jsx
+│           ├── ReviewTab.jsx
+│           └── ExportTab.jsx
 └── agent/
     ├── __init__.py             # Public API: JobAgent, LLMQuotaError
     ├── pipeline.py             # JobAgent orchestrator
-    ├── base_service.py         # BaseLLMService base class
-    ├── llm_client.py           # Groq / HuggingFace / Ollama client
-    ├── utils.py                # Shared utilities
+    ├── llm_client.py           # Groq / Ollama client
     ├── prompts/                # LLM prompts — one file per service
-    │   ├── cv_parser.py
-    │   ├── job_matcher.py
-    │   ├── cv_tailor.py
-    │   └── cover_letter.py
-    ├── cv/                     # CV-related services
-    │   ├── parser.py           # CV extraction + LLM parsing
-    │   ├── tailor.py           # Tailoring hints generator
-    │   └── cover_letter.py     # Cover letter writer
-    ├── matching/
-    │   └── matcher.py          # LLM-based scoring + PhD eligibility cap
-    └── search/
-        ├── searcher.py         # JobSearcher (orchestrates scrapers)
-        └── scrapers/
-            ├── base.py         # BaseScraper ABC + shared helpers
-            ├── euraxess.py     # EU/worldwide research portal
-            ├── mlscientist.py  # ML & AI academic positions
-            ├── jobs_ac_uk.py   # UK academic jobs (UK/worldwide only)
-            ├── scholarshipdb.py # Worldwide aggregator (28k+ positions)
-            └── nature_careers.py # Nature.com/careers — multidisciplinary
+    ├── cv/                     # CV parsing, tailoring, cover letter
+    ├── matching/               # LLM-based scoring
+    └── search/                 # Scrapers (Euraxess, mlscientist, jobs.ac.uk, …)
 ```
 
 ---
@@ -119,9 +105,7 @@ PhDScout/
 ## Model
 
 Powered by [Groq](https://groq.com) free API — fast inference, no subscription required.
-Uses `llama-3.1-8b-instant` by default. To change the model, edit `default_model` in `config.py`.
-
-For local use, the app also supports **Ollama** — set `LLM_BACKEND=ollama` in `.env`.
+Uses `llama-3.3-70b-versatile` by default. For local use, set `LLM_BACKEND=ollama` in `.env`.
 
 ---
 
@@ -140,12 +124,12 @@ LLM inference powered by [Groq](https://groq.com) free API.
 
 ## Cite this work
 
-If you use PhdScout in your research or project, please cite it as:
+If you use ScholarMatchAI in your research or project, please cite it as:
 
 ```bibtex
-@software{pellegrino2026phdscout,
+@software{pellegrino2026scholarmatchai,
   author  = {Pellegrino, Filippo},
-  title   = {{PhdScout}: an AI-powered search agent for academic positions},
+  title   = {{ScholarMatchAI}: an AI-powered search and application tool for academic positions},
   year    = {2026},
   url     = {https://github.com/Hipsterfil998/PhDScout},
   license = {MIT}

@@ -16,7 +16,7 @@ export default function ExportTab({ approved }) {
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = 'phdscout_applications.zip'
+      a.download = 'scholarmatchai_applications.zip'
       a.click()
       URL.revokeObjectURL(url)
       setStatus(`Downloaded ZIP with ${approved.length} application(s).`)

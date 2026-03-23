@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: phdscout-api
+    name: scholarmatchai-api
     runtime: docker
     plan: free
     healthCheckPath: /health
