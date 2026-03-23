@@ -8,7 +8,7 @@ import tempfile
 import zipfile
 from typing import Any
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import Depends, FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
@@ -52,7 +52,7 @@ def _agent() -> JobAgent:
     return JobAgent(model=_MODEL, backend=_BACKEND, api_key=_API_KEY)
 
 
-def _require_key() -> None:
+def _check_key() -> None:
     if not _API_KEY and _BACKEND != "ollama":
         raise HTTPException(400, "No API key configured. Set GROQ_API_KEY as an environment variable.")
 
@@ -71,8 +71,7 @@ def health() -> dict:
 # ---------------------------------------------------------------------------
 
 @app.post("/api/parse-cv")
-async def parse_cv(cv: UploadFile = File(...)) -> dict:
-    _require_key()
+async def parse_cv(cv: UploadFile = File(...), _: None = Depends(_check_key)) -> dict:
     suffix = os.path.splitext(cv.filename or "cv.pdf")[1] or ".pdf"
     with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as f:
         f.write(await cv.read())
@@ -110,8 +109,7 @@ class ScoreRequest(BaseModel):
 
 
 @app.post("/api/score-jobs")
-def score_jobs(req: ScoreRequest) -> dict:
-    _require_key()
+def score_jobs(req: ScoreRequest, _: None = Depends(_check_key)) -> dict:
     if not req.jobs:
         return {"scored_jobs": []}
     scored = _agent().score_jobs(req.jobs, req.profile_text)
@@ -128,15 +126,13 @@ class PrepareRequest(BaseModel):
 
 
 @app.post("/api/prepare")
-def prepare(req: PrepareRequest) -> dict:
-    _require_key()
+def prepare(req: PrepareRequest, _: None = Depends(_check_key)) -> dict:
     hints, cover_letter = _agent().prepare_application(req.job, req.profile_text)
     return {"hints": hints, "cover_letter": cover_letter}
 
 
 @app.post("/api/regenerate")
-def regenerate(req: PrepareRequest) -> dict:
-    _require_key()
+def regenerate(req: PrepareRequest, _: None = Depends(_check_key)) -> dict:
     letter = _agent().regenerate_letter(req.job, req.profile_text)
     return {"cover_letter": letter}
 

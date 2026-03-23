@@ -4,16 +4,6 @@
 
 @layer base {
   body {
-    @apply antialiased text-gray-900;
-  }
-}
-
-@layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+    @apply bg-gray-950 text-white antialiased;
   }
 }
