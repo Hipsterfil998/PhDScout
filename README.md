@@ -1,5 +1,7 @@
 <p align="center">
-  <img src="frontend/public/logo.svg" alt="ScholarMatchAI" width="80" />
+  <a href="https://github.com/Hipsterfil998/ScholarMatchAI">
+    <img src="frontend/public/logo.svg" alt="ScholarMatchAI" width="80" />
+  </a>
 </p>
 
 <h1 align="center">ScholarMatchAI</h1>

@@ -381,7 +381,9 @@
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px;">
-      <img src="logo.svg" alt="ScholarMatchAI" width="36" height="36" style="border-radius:8px;flex-shrink:0;">
+      <a href="#" onclick="show('overview', document.querySelector('.nav-link')); return false;">
+        <img src="logo.svg" alt="ScholarMatchAI" width="36" height="36" style="border-radius:8px;flex-shrink:0;">
+      </a>
       <h1>ScholarMatchAI</h1>
     </div>
     <span>Documentation</span>
@@ -430,7 +432,9 @@
   <!-- ── Overview ───────────────────────────────────────────────────── -->
   <section class="section active" id="overview">
     <div class="hero">
-      <img src="logo.svg" alt="ScholarMatchAI" width="72" height="72" style="border-radius:16px;margin-bottom:16px;">
+      <a href="#" onclick="show('overview', document.querySelector('.nav-link')); return false;">
+        <img src="logo.svg" alt="ScholarMatchAI" width="72" height="72" style="border-radius:16px;margin-bottom:16px;display:block;">
+      </a>
       <h1>ScholarMatchAI</h1>
       <p>AI-powered search agent for PhD positions, postdocs, research fellowships, and academic staff roles. Powered by the Groq free API — no subscriptions required.</p>
       <div class="hero-badges">
