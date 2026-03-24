@@ -1,6 +1,7 @@
 """Tests for JobSearcher — filtering, labelling, dedup, sorting. No HTTP."""
 
 from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
 import pytest
 from agent.search.searcher import JobSearcher
 
@@ -135,3 +136,80 @@ class TestSortKey:
         a = {"posted": _fmt(RECENT), "deadline": None, "description": "x" * 100}
         b = {"posted": _fmt(RECENT), "deadline": None, "description": "x" * 50}
         assert JobSearcher._sort_key(a) > JobSearcher._sort_key(b)
+
+
+class TestKeywordSearchFlag:
+    """keyword_search flag controls whether the post-filter is skipped."""
+
+    def _make_scraper(self, name, keyword_search, listings):
+        s = MagicMock()
+        s.name = name
+        s.keyword_search = keyword_search
+        s.scrape.return_value = listings
+        return s
+
+    def _run(self, scrapers, field="biomaterials"):
+        searcher = JobSearcher()
+        with patch.object(JobSearcher, "_build_scrapers", return_value=scrapers), \
+             patch("agent.search.searcher.time.sleep"):
+            return searcher.search(field, location="Europe", position_type="any")
+
+    def test_keyword_scraper_passes_without_keyword_in_title_or_desc(self):
+        """A listing from a keyword-search scraper must survive even if the
+        keyword does not appear in the title or short description."""
+        listing = {
+            "title": "Research Associate",
+            "description": "Join our multidisciplinary team.",
+            "url": "https://example.com/job/1",
+            "posted": None, "deadline": None, "type": "other", "source": "euraxess",
+        }
+        scraper = self._make_scraper("euraxess", keyword_search=True, listings=[listing])
+        results = self._run([scraper])
+        assert len(results) == 1
+
+    def test_non_keyword_scraper_filters_out_unrelated_listing(self):
+        """A listing from a non-keyword-search scraper must be removed when
+        the keyword does not appear in the title or description."""
+        listing = {
+            "title": "Research Associate",
+            "description": "Join our multidisciplinary team.",
+            "url": "https://example.com/job/2",
+            "posted": None, "deadline": None, "type": "other", "source": "mlscientist",
+        }
+        scraper = self._make_scraper("mlscientist", keyword_search=False, listings=[listing])
+        results = self._run([scraper])
+        assert len(results) == 0
+
+    def test_non_keyword_scraper_keeps_listing_when_keyword_matches(self):
+        """A listing from a non-keyword-search scraper is kept when the
+        keyword appears in the title."""
+        listing = {
+            "title": "PhD in Biomaterials",
+            "description": "Research on biomaterials.",
+            "url": "https://example.com/job/3",
+            "posted": None, "deadline": None, "type": "phd", "source": "mlscientist",
+        }
+        scraper = self._make_scraper("mlscientist", keyword_search=False, listings=[listing])
+        results = self._run([scraper])
+        assert len(results) == 1
+
+    def test_mixed_scrapers_correct_filtering(self):
+        """keyword-search listing survives; non-keyword off-topic listing is removed."""
+        kw_listing = {
+            "title": "Postdoc Position",
+            "description": "Generic description.",
+            "url": "https://example.com/job/4",
+            "posted": None, "deadline": None, "type": "postdoc", "source": "euraxess",
+        }
+        non_kw_off_topic = {
+            "title": "Machine Learning Researcher",
+            "description": "Deep learning and NLP.",
+            "url": "https://example.com/job/5",
+            "posted": None, "deadline": None, "type": "research_staff", "source": "mlscientist",
+        }
+        kw_scraper = self._make_scraper("euraxess", keyword_search=True, listings=[kw_listing])
+        non_kw_scraper = self._make_scraper("mlscientist", keyword_search=False, listings=[non_kw_off_topic])
+        results = self._run([kw_scraper, non_kw_scraper])
+        urls = [r["url"] for r in results]
+        assert "https://example.com/job/4" in urls
+        assert "https://example.com/job/5" not in urls

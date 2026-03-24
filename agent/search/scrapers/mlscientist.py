@@ -13,6 +13,7 @@ class MLScientistScraper(BaseScraper):
     """Scrapes mlscientist.com (WordPress) using category + search."""
 
     name = "mlscientist"
+    keyword_search = False  # category-based browsing; keyword is a loose WP search
 
     _TYPE_SLUG: ClassVar[dict[str, str]] = {
         "phd":            "phd-positions",

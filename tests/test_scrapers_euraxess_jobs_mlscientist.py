@@ -379,3 +379,18 @@ class TestMLScientistScraper:
              patch.object(s, "_sleep"):
             results = s.scrape("ML", "", "any")
         assert results == []
+
+
+# ---------------------------------------------------------------------------
+# keyword_search flag
+# ---------------------------------------------------------------------------
+
+class TestKeywordSearchFlags:
+    def test_euraxess_is_keyword_search(self):
+        assert EuraxessScraper.keyword_search is True
+
+    def test_jobs_ac_uk_is_keyword_search(self):
+        assert JobsAcUkScraper.keyword_search is True
+
+    def test_mlscientist_is_not_keyword_search(self):
+        assert MLScientistScraper.keyword_search is False

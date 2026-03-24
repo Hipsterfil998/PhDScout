@@ -68,6 +68,7 @@ class BaseScraper(ABC):
     """
 
     name: ClassVar[str] = ""
+    keyword_search: ClassVar[bool] = True  # True = board's own engine filters by keyword
 
     @abstractmethod
     def scrape(self, field: str, location: str, position_type: str) -> list[dict]:

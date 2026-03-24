@@ -72,8 +72,11 @@ class JobSearcher:
         pt = (position_type or "phd").lower()
         location = self._normalize_location(location)
 
+        scrapers = self._build_scrapers(location)
+        keyword_sources = {s.name for s in scrapers if s.keyword_search}
+
         all_listings: list[dict] = []
-        for scraper in self._build_scrapers(location):
+        for scraper in scrapers:
             try:
                 all_listings.extend(scraper.scrape(field, location, pt))
             except Exception:
@@ -84,7 +87,10 @@ class JobSearcher:
 
         _stop = {"and", "the", "for", "with", "from", "into", "using", "based", "applied"}
         phrases = [p.strip().lower() for p in re.split(r"[,/]", field) if p.strip()]
-        all_listings = [j for j in all_listings if self._field_matches(j, phrases, _stop)]
+        all_listings = [
+            j for j in all_listings
+            if j.get("source") in keyword_sources or self._field_matches(j, phrases, _stop)
+        ]
 
         if pt != "any":
             all_listings = [

@@ -237,3 +237,15 @@ class TestNatureCareersScraper:
         results = self._scrape("UK", html=html)
         assert len(results) == 1
         assert "GB" in results[0]["location"]
+
+
+# ---------------------------------------------------------------------------
+# keyword_search flag
+# ---------------------------------------------------------------------------
+
+class TestKeywordSearchFlags:
+    def test_scholarshipdb_is_keyword_search(self):
+        assert ScholarshipDbScraper.keyword_search is True
+
+    def test_nature_careers_is_keyword_search(self):
+        assert NatureCareersScraper.keyword_search is True
