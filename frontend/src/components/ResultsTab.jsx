@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { REC_CONFIG } from '../constants.js'
 import GraduationCapIcon from './GraduationCapIcon.jsx'
 
@@ -120,33 +119,17 @@ function JobCard({ job, idx, onSelect }) {
 }
 
 export default function ResultsTab({ profile, scoredJobs, onSelectJob }) {
-  const [minScore, setMinScore] = useState(0)
-
-  const filtered = scoredJobs.filter(j => (j.match?.match_score || 0) >= minScore)
-  const applying = filtered.filter(j => j.match?.recommendation === 'apply').length
-  const considering = filtered.filter(j => j.match?.recommendation === 'consider').length
+  const applying = scoredJobs.filter(j => j.match?.recommendation === 'apply').length
+  const considering = scoredJobs.filter(j => j.match?.recommendation === 'consider').length
 
   return (
     <div className="space-y-8">
 
       {/* Section header */}
-      <div className="py-4 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[10px] font-mono tracking-widest uppercase text-[#818cf8] mb-2">Search results</p>
-          <h2 className="text-3xl font-bold text-[#e8e8f0]">{scoredJobs.length} positions found</h2>
-          <p className="text-sm text-[#7a7a8f] mt-1">{applying} to apply · {considering} to consider</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <label className="text-[10px] font-mono tracking-widest uppercase text-[#7a7a8f] whitespace-nowrap">
-            Min score: <span className="font-bold text-[#818cf8]">{minScore}</span>
-          </label>
-          <input
-            type="range" min={0} max={90} step={5}
-            value={minScore}
-            onChange={e => setMinScore(Number(e.target.value))}
-            className="w-28 accent-[#818cf8]"
-          />
-        </div>
+      <div className="py-4">
+        <p className="text-[10px] font-mono tracking-widest uppercase text-[#818cf8] mb-2">Search results</p>
+        <h2 className="text-3xl font-bold text-[#e8e8f0]">{scoredJobs.length} positions found</h2>
+        <p className="text-sm text-[#7a7a8f] mt-1">{applying} to apply · {considering} to consider</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -159,19 +142,19 @@ export default function ResultsTab({ profile, scoredJobs, onSelectJob }) {
         {/* Job list */}
         <div className="lg:col-span-2">
           <p className="text-[10px] font-mono tracking-widest uppercase text-[#7a7a8f] mb-3">
-            Positions ({filtered.length})
+            Positions ({scoredJobs.length})
           </p>
-          {filtered.length === 0 ? (
+          {scoredJobs.length === 0 ? (
             <div className="bg-[#17171c] border border-[#2e2e38] p-8 text-center text-[#7a7a8f]">
-              No positions above score {minScore}. Lower the filter to see more.
+              No positions found. Try lowering the minimum score in the Search tab.
             </div>
           ) : (
             <div className="flex flex-col gap-px bg-[#2e2e38]">
-              {filtered.map((job, idx) => (
+              {scoredJobs.map((job, idx) => (
                 <JobCard
                   key={job.url || idx}
                   job={job}
-                  idx={scoredJobs.indexOf(job)}
+                  idx={idx}
                   onSelect={onSelectJob}
                 />
               ))}
