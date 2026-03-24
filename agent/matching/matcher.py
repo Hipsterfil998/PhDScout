@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, TypedDict
 
 from agent.base_service import BaseLLMService
@@ -111,8 +112,17 @@ class JobMatcher(BaseLLMService):
         self,
         jobs: list[dict[str, Any]],
         profile_text: str,
+        max_workers: int = 8,
     ) -> list[dict[str, Any]]:
-        """Score all jobs and return them sorted by score (highest first)."""
-        scored = [{**job, "match": self.score(job, profile_text)} for job in jobs]
+        """Score all jobs in parallel and return them sorted by score (highest first)."""
+        scored: list[dict[str, Any]] = [{}] * len(jobs)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = {
+                executor.submit(self.score, job, profile_text): i
+                for i, job in enumerate(jobs)
+            }
+            for future in as_completed(futures):
+                i = futures[future]
+                scored[i] = {**jobs[i], "match": future.result()}
         scored.sort(key=lambda j: j["match"].get("match_score", 0), reverse=True)
         return scored
