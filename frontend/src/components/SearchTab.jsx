@@ -49,7 +49,8 @@ export default function SearchTab({ onDone }) {
       setStepIdx(2)
       const { scored_jobs } = await scoreJobs({ jobs, profileText: profile_text })
       setStepIdx(3)
-      onDone({ profile, profileText: profile_text, scoredJobs: scored_jobs })
+      const filtered = scored_jobs.filter(j => (j.match?.match_score || 0) >= minScore)
+      onDone({ profile, profileText: profile_text, scoredJobs: filtered })
     } catch (err) {
       setError('Error: ' + (err?.response?.data?.detail || err.message || 'Unknown error'))
     } finally {
